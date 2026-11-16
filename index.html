@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CargaClara Importaciones</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a6f6a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CargaClara">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Idea: hoja de embarque. Formulario a la izquierda en el orden real de una importación,
+   resultados fijos a la derecha con cifras rotuladas como marcas de contenedor. */
+:root{
+  --bg:#eef1f0; --surface:#ffffff; --sunk:#e4e9e7; --ink:#10262e; --muted:#566a70; --line:#cdd7d4;
+  --accent:#0a6f6a; --accent-ink:#ffffff; --mark:#f2b705;
+  --good:#1c7a3c; --warn:#9a5b00; --bad:#b3261e;
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b191f; --surface:#12262e; --sunk:#0f2027; --ink:#e6eeec; --muted:#93a8ac; --line:#28424b;
+    --accent:#45c4ba; --accent-ink:#04211f; --mark:#f2b705;
+    --good:#62d08a; --warn:#f0b24c; --bad:#ff8d83;
+    --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b191f; --surface:#12262e; --sunk:#0f2027; --ink:#e6eeec; --muted:#93a8ac; --line:#28424b;
+  --accent:#45c4ba; --accent-ink:#04211f; --mark:#f2b705;
+  --good:#62d08a; --warn:#f0b24c; --bad:#ff8d83;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--body)}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-size:26px;font-weight:800}
+h3{font-size:20px;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* Cabecera */
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:14px 16px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 28px}
+.brand{font-family:var(--display);font-weight:800;font-size:34px;text-transform:uppercase;line-height:.9;letter-spacing:.01em}
+.brand span{color:var(--accent)}
+.brand small{display:block;font:500 11px/1.4 var(--mono);letter-spacing:.14em;color:var(--muted);margin-top:4px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 10px 10px;cursor:pointer;font-weight:500;color:var(--muted)}
+nav button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.stripe{height:6px;background:repeating-linear-gradient(-45deg,var(--mark) 0 12px,var(--ink) 12px 24px)}
+.rates{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13px;color:var(--muted)}
+.rates label{display:flex;align-items:center;gap:6px}
+.rates input{width:84px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-family:var(--mono)}
+.rates input.code{width:58px;text-transform:uppercase}
+#sync{margin-left:auto;display:flex;align-items:center;gap:6px}
+#sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+#sync.cloud i{background:var(--good)} #sync.error i{background:var(--bad)}
+
+main{max-width:1240px;margin:0 auto;padding:8px 16px 96px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.55;cursor:default}
+.pill{display:inline-block;font:500 12px/1 var(--mono);padding:5px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--bad)} .pill.neutral{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:14px 0}
+
+/* Lista de estudios */
+.study-list{display:grid;gap:12px}
+.study{display:grid;gap:12px;border-left:6px solid var(--accent)}
+.study.good{border-left-color:var(--good)} .study.warn{border-left-color:var(--warn)} .study.bad{border-left-color:var(--bad)}
+.study-top{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.study-top h3{font-size:24px;font-weight:800;overflow-wrap:anywhere}
+.study-meta{display:flex;flex-wrap:wrap;gap:6px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0}
+.metrics div{background:var(--sunk);border-radius:6px;padding:8px 10px}
+.metrics dt{font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.metrics dd{margin:2px 0 0;font:500 17px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Pantalla del estudio */
+.study-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start}
+.name-input{width:100%;font:800 34px/1.05 var(--display);text-transform:uppercase;background:transparent;border:0;border-bottom:2px solid var(--line);padding:4px 0;color:var(--ink)}
+.sections{display:grid;gap:14px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.sec-h b{font:500 12px/1 var(--mono);color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:5px 7px}
+.sec-h p{margin-left:auto;text-align:right}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>span{font-size:13px;font-weight:500}
+.fld small{color:var(--muted);font-size:12px;line-height:1.35}
+.inp{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden}
+.inp:focus-within{border-color:var(--accent)}
+.inp input,.inp select{flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-family:var(--mono);outline:0}
+.inp i{font:normal 12px/1 var(--mono);color:var(--muted);display:flex;align-items:center;padding:0 8px;background:var(--sunk)}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:9px;resize:vertical}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.seg label{cursor:pointer}
+.seg input{position:absolute;opacity:0}
+.seg span{display:block;padding:7px 12px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:500;background:var(--bg)}
+.seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}
+.check:first-child{border-top:0}
+.check input{margin-top:3px;width:17px;height:17px;accent-color:var(--accent);flex:none}
+.outs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.outs div{display:flex;flex-direction:column}
+.outs span{font:500 11px/1.3 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.outs b{font:500 16px/1.3 var(--mono);font-variant-numeric:tabular-nums}
+.note{background:var(--sunk);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--muted);margin-top:12px}
+.note b{color:var(--ink)}
+
+.results{position:sticky;top:12px;display:grid;gap:14px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--sunk);border-radius:6px;padding:10px 12px;min-width:0}
+.kpi span{font:500 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block}
+.kpi b{font:800 34px/1 var(--display);display:block;margin-top:4px;overflow-wrap:anywhere}
+.kpi small{font:400 12px/1.3 var(--mono);color:var(--muted)}
+.kpi.good b{color:var(--good)} .kpi.warn b{color:var(--warn)} .kpi.bad b{color:var(--bad)}
+.bar{display:flex;gap:2px;height:18px;margin:10px 0}
+.bar i{display:block;min-width:3px;border-radius:2px}
+.bar:empty{background:var(--sunk);border-radius:4px}
+.rows{display:grid;gap:0;margin:0}
+.rows div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
+.rows div:first-child{border-top:0}
+.rows dt{display:flex;align-items:center;gap:7px}
+.rows dt i{width:10px;height:10px;border-radius:2px;flex:none}
+.rows dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.rows .total{font-weight:600;border-top:2px solid var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.r,th.r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.meter{height:10px;border-radius:99px;background:var(--sunk);overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter.good i{background:var(--good)} .meter.warn i{background:var(--warn)} .meter.bad i{background:var(--bad)}
+.ai-out{white-space:pre-wrap;background:var(--sunk);border-radius:6px;padding:12px;margin-top:10px;font-size:14px;min-height:20px}
+.ai-out:empty{display:none}
+.zh{font-size:17px}
+.dock{display:none}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start}
+.stack{display:grid;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+@media (max-width:940px){
+  .study-grid{grid-template-columns:minmax(0,1fr)}
+  .results{position:static}
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--ink);color:var(--bg);padding:8px 16px;gap:14px;align-items:center;justify-content:space-between}
+  .dock div{display:flex;flex-direction:column;min-width:0}
+  .dock span{font:500 10px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+  .dock b{font:800 20px/1.1 var(--display)}
+  .dock a{color:var(--mark);font-size:13px;font-weight:600;white-space:nowrap}
+  .name-input{font-size:28px}
+}
+@media (max-width:420px){ .kpi b{font-size:28px} .brand{font-size:28px} .tool-grid{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:no-preference){ .bar i,.meter i{transition:width .25s ease} }
+
+/* Fase 1: pestañas, regla, proveedores, importaciones */
+.tabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;cursor:pointer;font-weight:500;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rule{border-radius:6px;padding:10px 12px;font-size:14px;font-weight:500;border:1px solid var(--line);margin-top:12px;color:var(--muted)}
+.rule.good{color:var(--good);border-color:currentColor}.rule.bad{color:var(--bad);border-color:currentColor;background:color-mix(in srgb,var(--bad) 8%,transparent)}.rule.warn{color:var(--warn);border-color:currentColor}
+.rule span{display:block;font-weight:400;color:var(--ink);font-size:13px;margin-top:3px}
+.bad{color:var(--bad)}
+td.good{color:var(--good)}td.warn{color:var(--warn)}td.bad{color:var(--bad)}
+details.cand>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}
+details.cand>summary::-webkit-details-marker{display:none}
+details.cand>summary b{flex:1;font:800 22px/1.1 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
+details.cand>summary::after{content:"+";font:500 20px/1 var(--mono);color:var(--muted)}
+details.cand[open]>summary::after{content:"–"}
+.light{width:16px;height:16px;border-radius:50%;background:var(--muted);flex:none;box-shadow:0 0 0 3px var(--sunk)}
+.light.good{background:var(--good)}.light.warn{background:var(--mark)}.light.bad{background:var(--bad)}
+details.cand h4{font:500 12px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 0 6px}
+details.cand h4.bad{color:var(--bad)}
+.verdict{margin:10px 0 14px;font-weight:500}
+.podium{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.podium div{background:var(--sunk);border-radius:6px;padding:10px 12px;border-top:4px solid var(--good);min-width:0}
+.podium div.warn{border-top-color:var(--mark)}
+.podium span{font:500 11px/1.4 var(--mono);color:var(--muted);letter-spacing:.06em;display:block}
+.podium b{display:block;font:800 21px/1.1 var(--display);text-transform:uppercase;overflow-wrap:anywhere;margin:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.k3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.nbars{display:grid;gap:10px;margin-top:12px}
+.nbar{display:grid;grid-template-columns:minmax(90px,170px) 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.nbar>span{overflow-wrap:anywhere}
+.nbar b{font-weight:500;font-size:13px}
+.track{height:14px}
+.track i{display:block;height:100%;min-width:3px;background:var(--c1);border-radius:0 4px 4px 0}
+.cell{width:74px;border:1px solid var(--line);border-radius:4px;background:var(--bg);padding:6px;font:13px var(--mono);color:var(--ink)}
+.cell.wide{width:170px;font-family:var(--body)}.cell.mid{width:88px}
+table.lines td{padding:5px 6px;vertical-align:middle}
+table.lines tr.sel td{background:var(--sunk)}
+input[type=file]{font-size:13px;max-width:100%}
+.sections>*,.stack>*,.study-grid>*,.results>*{min-width:0}
+.card{min-width:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;align-items:start}
+.two>*{min-width:0}
+@media (max-width:520px){.nbar{grid-template-columns:1fr auto}.nbar .track{grid-column:1/-1;order:3}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Carga<span>Clara</span><small>ESTUDIOS DE IMPORTACIÓN · CN → TU PAÍS</small></div>
+    <nav aria-label="Secciones">
+      <button type="button" data-go="estudios">Mis estudios</button>
+      <button type="button" data-go="importaciones">Importaciones</button>
+      <button type="button" data-go="herramientas">Herramientas</button>
+      <button type="button" data-go="china">1688 y traducción</button>
+    </nav>
+  </div>
+  <div class="stripe" aria-hidden="true"></div>
+</header>
+<div class="rates">
+  <label>1 USD = <input id="cfg_cny" class="num" type="number" inputmode="decimal" step="any" min="0"> CNY</label>
+  <label>Moneda local <input id="cfg_localCode" class="code" type="text" maxlength="4" placeholder="VES"></label>
+  <label>1 USD = <input id="cfg_localRate" class="num" type="number" inputmode="decimal" step="any" min="0" placeholder="0"> <span id="cfg_localLbl">local</span></label>
+  <label>Rentabilidad mínima <input id="cfg_minRent" class="num" type="number" inputmode="decimal" step="any" min="0" style="width:64px"> %</label>
+  <span id="sync"><i></i><span id="syncTxt">Guardado en este dispositivo</span></span>
+</div>
+
+<main>
+<!-- ESTUDIOS -->
+<section id="view-estudios">
+  <div class="head">
+    <div><h2>Mis estudios de producto</h2><p class="muted">Cada producto que analizas tiene su propia pantalla con todos sus cálculos.</p></div>
+    <div class="actions"><button type="button" class="btn sm" id="expBtn">Exportar copia</button><button type="button" class="btn sm" id="impBtn">Importar copia</button><input type="file" id="impFile" accept="application/json,.json" hidden><button type="button" class="btn primary" id="newStudy">+ Nuevo estudio</button></div>
+  </div>
+  <div class="study-list" id="studyList"></div>
+</section>
+
+<!-- ESTUDIO -->
+<section id="view-estudio" hidden>
+  <div class="head">
+    <button type="button" class="btn sm" data-go="estudios">← Mis estudios</button>
+    <div class="actions">
+      <button type="button" class="btn sm" id="copySummary">Copiar resumen</button>
+      <button type="button" class="btn sm" id="dupStudy">Duplicar</button>
+      <button type="button" class="btn sm primary" id="toImport">Convertir en importación</button>
+    </div>
+  </div>
+  <div id="studyForm"></div>
+</section>
+
+<!-- IMPORTACIONES -->
+<section id="view-importaciones" hidden>
+  <div class="head">
+    <div><h2>Mis importaciones</h2><p class="muted">Todas tus operaciones juntas: cuánto invertiste, cuánto recuperaste y cuánto falta por ganar.</p></div>
+    <button type="button" class="btn primary" id="newImport">+ Nueva importación</button>
+  </div>
+  <div class="stack" id="impDash"></div>
+  <div class="head" style="margin-bottom:8px"><h3>Operaciones</h3></div>
+  <div class="study-list" id="impList"></div>
+</section>
+<section id="view-importacion" hidden>
+  <div class="head"><button type="button" class="btn sm" data-go="importaciones">← Mis importaciones</button></div>
+  <div id="impForm"></div>
+</section>
+
+<!-- HERRAMIENTAS -->
+<section id="view-herramientas" hidden>
+  <div class="head"><div><h2>Herramientas rápidas</h2><p class="muted">Cálculos sueltos que no necesitan un estudio completo.</p></div></div>
+  <div class="tool-grid" id="tools"></div>
+</section>
+
+<!-- CHINA -->
+<section id="view-china" hidden>
+  <div class="head"><div><h2>1688 y traducción</h2><p class="muted">Para comprar en páginas que solo están en mandarín.</p></div></div>
+  <div class="tool-grid" id="china"></div>
+</section>
+</main>
+
+<div class="dock" id="dock" hidden>
+  <div><span>Costo/u</span><b data-o="landedUnit">—</b></div>
+  <div><span>Ganancia neta</span><b data-o="net">—</b></div>
+  <div><span>Rentab.</span><b data-o="rent">—</b></div>
+  <a href="#resultados" id="toResults">Ver todo ↓</a>
+</div>
+
+<script>
+"use strict";
+/*CALC*/
+function n(v){v=parseFloat(v);return isFinite(v)?v:0}
+function minRent(cfg){return cfg&&cfg.minRent!==undefined&&cfg.minRent!==''?n(cfg.minRent):40}
+function ruleLevel(rentPct,min){return rentPct>=min-1e-9?'good':rentPct>=min/2?'warn':'bad'}
+function calc(s,cfg){
+  const qty=n(s.qty);
+  const fx=s.cur==='CNY'?(n(cfg.cny)>0?1/n(cfg.cny):0):1;
+  const unitUSD=n(s.price)*fx;
+  const goods=unitUSD*qty;
+  const agent=goods*n(s.agentPct)/100;
+  const inland=n(s.inland);
+  const payFee=(goods+agent+inland)*n(s.payPct)/100+n(s.payFix);
+  const origin=agent+inland+n(s.samples)+n(s.inspection)+n(s.originOther)+payFee;
+  // Empaque
+  const upc=Math.max(1,n(s.upc)||1);
+  const boxes=qty>0?Math.ceil(qty/upc):0;
+  const vol=n(s.bl)*n(s.bw)*n(s.bh);
+  const boxCbm=vol/1e6;
+  const cbm=boxCbm*boxes;
+  const gross=n(s.bkg)*boxes;
+  const volAir=vol/(n(s.airDiv)||6000)*boxes;
+  const volCour=vol/(n(s.courDiv)||5000)*boxes;
+  const chargAir=Math.max(gross,volAir), chargCour=Math.max(gross,volCour);
+  const seaWM=Math.max(cbm,gross/1000);
+  const density=cbm>0?gross/cbm:0;
+  // Flete
+  let billable=0,freight=0,billUnit='';
+  if(s.mode==='sea'){billable=boxes?Math.max(s.seaWM?seaWM:cbm,n(s.seaMin)):0;freight=billable*n(s.seaRate);billUnit='CBM'}
+  else if(s.mode==='air'){billable=boxes?Math.max(chargAir,n(s.airMin)):0;freight=billable*n(s.airRate);billUnit='kg'}
+  else if(s.mode==='courier'){billable=boxes?Math.max(chargCour,n(s.courMin)):0;freight=billable*n(s.courRate);billUnit='kg'}
+  else if(s.mode==='fcl'){freight=n(s.fclCost)}
+  else{freight=n(s.manualFreight)}
+  const insurance=(goods+freight)*n(s.insPct)/100;
+  const destFix=n(s.destFix);
+  // Aduana: en puerta a puerta la agencia ya la incluye en su tarifa
+  const cif=goods+freight+insurance;
+  const taxActive=!!s.taxOn&&!s.d2d;
+  let duty=0,customsFee=0,otherTax=0,vat=0;
+  if(taxActive){
+    duty=cif*n(s.dutyPct)/100; customsFee=cif*n(s.cfeePct)/100; otherTax=cif*n(s.otherPct)/100;
+    vat=(cif+duty+customsFee+otherTax)*n(s.vatPct)/100;
+  }
+  const broker=s.d2d?0:n(s.broker);
+  const vatCost=s.vatCredit?0:vat;
+  const taxes=duty+customsFee+otherTax+vatCost+broker;
+  const landed=goods+origin+freight+insurance+destFix+taxes;
+  const landedUnit=qty>0?landed/qty:0;
+  const factor=goods>0?landed/goods:0;
+  // Venta
+  const sellable=qty*(1-Math.min(100,n(s.lossPct))/100);
+  const sp=n(s.salePrice);
+  const feeR=n(s.feePct)/100;
+  const perUnitSell=n(s.adUnit)+n(s.shipUnit);
+  const revenue=sellable*sp;
+  const grossProfit=revenue-landed;
+  const grossMargin=revenue>0?grossProfit/revenue:0;
+  const fees=revenue*feeR;
+  const varSell=sellable*perUnitSell;
+  const fixed=n(s.fixed);
+  const sellCosts=fees+varSell+fixed;
+  const netPre=grossProfit-sellCosts;
+  const incomeTax=netPre>0?netPre*n(s.incTaxPct)/100:0;
+  const net=netPre-incomeTax;
+  const netMargin=revenue>0?net/revenue:0;
+  const netUnit=sellable>0?net/sellable:0;
+  const invest=landed+varSell+fixed;
+  // Rentabilidad = (venta - costo total) / costo total
+  const totalCost=landed+sellCosts+incomeTax;
+  const rent=totalCost>0?net/totalCost:0;
+  const months=n(s.months);
+  const rentMonth=months>0?rent/months:null;
+  const contrib=sp*(1-feeR)-perUnitSell;
+  const beUnits=contrib>0?(landed+fixed)/contrib:null;
+  const baseUnit=sellable>0?(landed+fixed)/sellable+perUnitSell:0;
+  const bePrice=sellable>0&&feeR<1?baseUnit/(1-feeR):0;
+  // Regla mínima (antes del impuesto sobre la ganancia)
+  const m=minRent(cfg)/100;
+  const rDen=1-feeR*(1+m);
+  const rulePrice=sellable>0&&rDen>0?baseUnit*(1+m)/rDen:null;
+  const maxC=sellable>0?sellable*sp*rDen/(1+m):0;
+  const maxLandedUnit=qty>0?(maxC-fixed-varSell)/qty:0;
+  const ruleOk=revenue>0&&rent>=m-1e-9;
+  return {qty,unitUSD,goods,agent,payFee,origin,boxes,boxCbm,cbm,gross,volAir,volCour,chargAir,chargCour,seaWM,density,
+    billable,billUnit,freight,insurance,destFix,cif,duty,customsFee,otherTax,vat,vatCost,broker,taxes,landed,landedUnit,factor,
+    sellable,revenue,grossProfit,grossMargin,fees,varSell,fixed,sellCosts,netPre,incomeTax,net,netMargin,netUnit,
+    invest,totalCost,rent,rentMonth,beUnits,bePrice,rulePrice,maxLandedUnit,ruleOk};
+}
+function fitBoxes(l,w,h,L,W,H){
+  if(!(l>0&&w>0&&h>0))return 0;
+  const p=[[l,w,h],[l,h,w],[w,l,h],[w,h,l],[h,l,w],[h,w,l]];
+  return Math.max(...p.map(([a,b,c])=>Math.floor(L/a)*Math.floor(W/b)*Math.floor(H/c)));
+}
+
+// ---- Proveedores: matriz de decisión ----
+const PLAT=[
+  ['verified','Tiene la insignia Verified Supplier',10],
+  ['audit','Muestra auditoría de un tercero (SGS, TÜV, Intertek u otra)',6],
+  ['ta','Ofrece Trade Assurance (pago protegido)',14]
+];
+const CHECKS=[
+  ['lic','Recibí su licencia comercial (营业执照) y el nombre coincide con el de la tienda',6],
+  ['gsxt','Comprobé la empresa en el registro oficial chino (gsxt.gov.cn) con su código de 18 caracteres',6],
+  ['bank','La cuenta bancaria está a nombre de la empresa, no de una persona',6],
+  ['sample','Pedí una muestra y coincide con lo ofrecido',5],
+  ['video','Hicimos videollamada y mostró la fábrica o el almacén',4],
+  ['tech','Responde con fichas técnicas, certificados y fotos reales',2],
+  ['addr','Su dirección aparece en un mapa (Baidu Maps o Amap)',1]
+];
+const FLAGS=[
+  ['cheap','El precio está muy por debajo del resto del mercado'],
+  ['wu','Pide pago por Western Union, cripto o a una cuenta personal'],
+  ['off','Presiona para pagar fuera de la plataforma'],
+  ['bankchg','Cambió los datos bancarios a última hora'],
+  ['brand','Ofrece marcas reconocidas a precios irreales'],
+  ['nosample','Se niega a enviar muestra o a hacer videollamada']
+];
+// Diccionarios de fallas (español, inglés y chino)
+const DICT={
+  'Calidad':/broken|defect|faulty|poor quality|bad quality|low quality|cheaply made|stopp?ed working|doesn'?t work|does not work|not working|damaged|fake|flimsy|roto|rota|rotos|defectuos|mala calidad|baja calidad|dañad|no funciona|no sirve|dej[oó] de funcionar|falso|falsificad|坏了|质量差|质量不好|质量很差|破损|不能用|用不了|假货|劣质/i,
+  'Tamaño o medidas':/too small|too big|too large|too short|too long|wrong size|runs small|runs large|smaller than|bigger than|size is (wrong|different)|muy pequeñ|demasiado pequeñ|muy grande|demasiado grande|talla (incorrecta|equivocada)|m[aá]s pequeñ|tamaño (incorrecto|diferente|equivocado)|medidas? (incorrectas?|diferentes?)|尺寸不对|尺码不对|太小|太大|偏小|偏大/i,
+  'No es lo ofrecido':/not as described|not as pictured|different from (the )?(picture|photo|description)|wrong (item|color|colour|model|product)|not what i ordered|no es (como|lo que)|diferente a la (foto|descripci[oó]n|imagen)|color (incorrecto|equivocado|diferente)|producto equivocado|与描述不符|货不对板|颜色不对|发错/i,
+  'Envío o empaque':/\blate\b|delay|never arrived|didn'?t arrive|not received|missing (part|item|piece)|poor packag|bad packag|tard[oó] (mucho|demasiado)|retras|nunca lleg|no lleg[oó]|no (lo )?recib[ií]|falt(a|an|aron|aba) |mal empa(que|cado)|发货慢|物流慢|没收到|少发|漏发|包装差|包装破/i,
+  'Atención del vendedor':/no response|never (replied|responded)|scam|refus(e|ed|es) (to )?refund|no refund|bad (service|communication)|unresponsive|estafa|no respond|no contest|no devuelv|sin reembolso|mal servicio|mala atenci[oó]n|骗子|不退款|态度差|不回复/i
+};
+function analyzeReviews(text){
+  const lines=String(text||'').split(/\n+/).map(x=>x.trim()).filter(x=>x.length>2);
+  const cats={};for(const k in DICT)cats[k]=0;
+  let bad=0;
+  lines.forEach(l=>{let hit=false;for(const k in DICT){if(DICT[k].test(l)){cats[k]++;hit=true}}if(hit)bad++});
+  return {total:lines.length,bad,rate:lines.length?bad/lines.length:0,cats};
+}
+// Publicaciones hermanas: "calificación reseñas MOQ" por línea
+function siblings(text){
+  let sum=0,cnt=0,rows=0;
+  String(text||'').split(/\n+/).forEach(l=>{
+    const m=l.match(/\d+(?:[.,]\d+)?/g);if(!m||m.length<2)return;
+    const r=parseFloat(m[0].replace(',','.')),c=parseFloat(m[1].replace(',','.'));
+    if(r>0&&r<=5&&c>0){sum+=r*c;cnt+=c;rows++}
+  });
+  return {rows,reviews:cnt,rating:cnt?sum/cnt:0};
+}
+function relevance(titles,kw,excl){
+  const lines=String(titles||'').split(/\n+/).map(x=>x.trim()).filter(x=>x.length>2);
+  const toks=String(kw||'').toLowerCase().split(/[\s,]+/).filter(t=>t.length>=3);
+  const ex=String(excl||'').toLowerCase().split(/[,\n]+/).map(t=>t.trim()).filter(Boolean);
+  let rel=0,out=0;
+  lines.forEach(l=>{const t=l.toLowerCase();if(ex.some(e=>t.includes(e))){out++;return}if(toks.length&&toks.some(k=>t.includes(k)))rel++});
+  return {total:lines.length,rel,out,rate:lines.length?rel/lines.length:0,hasKw:toks.length>0};
+}
+function candScore(c,s){
+  const chk=c.chk||{};let pts=0;
+  pts+=Math.min(n(c.years),5)/5*8;
+  PLAT.forEach(p=>{if(chk[p[0]])pts+=p[2]});
+  pts+=c.type==='fab'||c.type==='both'?4:c.type==='trade'?2:0;
+  const ot=n(c.ontime);pts+=ot>=95?8:ot>=90?6:ot>=80?3:0;
+  const sib=siblings(c.sib);if(sib.reviews>0)pts+=Math.max(0,Math.min(1,(sib.rating-3)/2))*10;
+  const rev=analyzeReviews(c.reviews);if(rev.total>0)pts+=(1-Math.min(1,rev.rate/0.3))*10;
+  CHECKS.forEach(p=>{if(chk[p[0]])pts+=p[2]});
+  const flags=FLAGS.filter(f=>chk[f[0]]).length;
+  const score=Math.max(0,Math.round(pts)-15*flags);
+  let level='good',verdict='Verde: buenas señales para un primer pedido de prueba';
+  if(flags>=2||score<40){level='bad';verdict='Rojo: no pagues todavía'}
+  else if(flags===1||score<70){level='warn';verdict='Amarillo: avanza con cautela, pedido pequeño y pago protegido'}
+  const cat=relevance(c.catalog,s&&s.kw,s&&s.excl);
+  return {score,flags,level,verdict,sib,rev,cat};
+}
+
+// ---- Importaciones: prorrateo y control de ventas ----
+function calcImport(imp,cfg){
+  const fx=imp.cur==='CNY'?(n(cfg.cny)>0?1/n(cfg.cny):0):1;
+  const global=n(imp.inland)+n(imp.freight)+n(imp.fees)+n(imp.local)+n(imp.other);
+  const L=(imp.lines||[]).map(l=>({l,qty:n(l.qty),value:n(l.qty)*n(l.price)*fx,weight:n(l.qty)*n(l.kg)}));
+  let key=imp.alloc==='cantidad'?'qty':imp.alloc==='peso'?'weight':'value',usedAlloc=imp.alloc||'valor';
+  let tb=L.reduce((a,x)=>a+x[key],0);
+  if(!(tb>0)&&key!=='value'){key='value';usedAlloc='valor';tb=L.reduce((a,x)=>a+x.value,0)}
+  if(!(tb>0)){key='qty';usedAlloc='cantidad';tb=L.reduce((a,x)=>a+x.qty,0)}
+  const lines=L.map(x=>{
+    const alloc=tb>0?global*x[key]/tb:0;
+    const cost=x.value+alloc;
+    const unit=x.qty>0?cost/x.qty:0;
+    let sold=0,income=0,sc=0;
+    (x.l.sales||[]).forEach(v=>{sold+=n(v.units);income+=n(v.units)*n(v.price);sc+=n(v.cost)});
+    const gross=income-sold*unit;
+    const profit=gross-sc;
+    const stock=Math.max(0,x.qty-sold);
+    const sale=n(x.l.sale);
+    const pending=sale>0?stock*(sale-unit):0;
+    const rent=sale>0&&unit>0?(sale-unit)/unit:null;
+    return {id:x.l.id,qty:x.qty,value:x.value,alloc,cost,unit,sold,income,saleCosts:sc,gross,profit,stock,
+      stockCost:stock*unit,pending,rent,avg:sold>0?income/sold:0,recovered:income-sc};
+  });
+  const T=k=>lines.reduce((a,x)=>a+x[k],0);
+  const goods=T('value'),invested=goods+global,recovered=T('recovered');
+  return {lines,global,goods,invested,recovered,recPct:invested>0?recovered/invested:0,gross:T('gross'),profit:T('profit'),
+    pending:T('pending'),stockCost:T('stockCost'),units:T('qty'),sold:T('sold'),done:invested>0&&recovered>=invested-1e-9,usedAlloc};
+}
+
+// ---- Lectura de proformas (Excel, CSV o tabla pegada) ----
+function parseNum(v){
+  if(typeof v==='number')return isFinite(v)?v:0;
+  let t=String(v??'').replace(/[^\d.,-]/g,'');if(!t)return 0;
+  const c=t.lastIndexOf(','),d=t.lastIndexOf('.');
+  if(c>-1&&d>-1)t=c>d?t.replace(/\./g,'').replace(',','.'):t.replace(/,/g,'');
+  else if(c>-1)t=/^-?\d{1,3}(,\d{3})+$/.test(t)?t.replace(/,/g,''):t.replace(',','.');
+  else if(/^-?\d{1,3}(\.\d{3}){2,}$/.test(t))t=t.replace(/\./g,'');
+  const x=parseFloat(t);return isFinite(x)?x:0;
+}
+function parseTable(text){
+  text=String(text||'').replace(/\r/g,'');
+  const first=text.split('\n').slice(0,10).join('\n');
+  const d=first.includes('\t')?'\t':(first.split(';').length>first.split(',').length?';':',');
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cell+='"';i++}else q=false}else cell+=ch}
+    else if(ch==='"'&&cell==='')q=true;
+    else if(ch===d){row.push(cell);cell=''}
+    else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell=''}
+    else cell+=ch;
+  }
+  if(cell!==''||row.length){row.push(cell);rows.push(row)}
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+const COLRX={
+  name:/desc|product|goods|item name|commodity|品名|产品|名称|art[ií]culo|nombre/i,
+  sku:/sku|model|modelo|ref|code|c[oó]digo|item no|part no|型号|货号/i,
+  qty:/qty|quantity|cantidad|cant\.?$|pcs|数量|unidades|units/i,
+  price:/price|precio|单价|u\/p|unitario/i,
+  kg:/weight|peso|\bkg|g\.?w|重量/i
+};
+function guessCols(rows){
+  let hi=-1,best=0;
+  for(let i=0;i<Math.min(rows.length,30);i++){
+    let hits=0;
+    for(const k in COLRX){if(rows[i].some(c=>typeof c==='string'&&c.length<40&&COLRX[k].test(c)))hits++}
+    if(hits>best){best=hits;hi=i}
+  }
+  if(best<2)hi=-1;
+  const width=rows.reduce((a,r)=>Math.max(a,r.length),0);
+  const head=[];
+  for(let j=0;j<width;j++){const h=hi>=0?String(rows[hi][j]??'').trim():'';head.push(h||('Columna '+(j+1)))}
+  const map={name:-1,sku:-1,qty:-1,price:-1,kg:-1};
+  if(hi>=0)head.forEach((h,j)=>{
+    if(map.price<0&&COLRX.price.test(h)&&!/total|amount|importe|金额/i.test(h))map.price=j;
+    else if(map.qty<0&&COLRX.qty.test(h))map.qty=j;
+    else if(map.kg<0&&COLRX.kg.test(h))map.kg=j;
+    else if(map.name<0&&COLRX.name.test(h))map.name=j;
+    else if(map.sku<0&&COLRX.sku.test(h))map.sku=j;
+  });
+  return {hi,head,map};
+}
+function tableLines(rows,hi,map){
+  const out=[];
+  rows.slice(hi+1).forEach(r=>{
+    const qty=map.qty>=0?parseNum(r[map.qty]):0,price=map.price>=0?parseNum(r[map.price]):0;
+    if(!(qty>0&&price>0))return;
+    const name=map.name>=0?String(r[map.name]??'').trim():'';
+    const sku=map.sku>=0?String(r[map.sku]??'').trim():'';
+    out.push({name:name||sku||('Producto '+(out.length+1)),sku,qty,price,kg:map.kg>=0?parseNum(r[map.kg]):0});
+  });
+  return out;
+}
+/*END*/
+
+// ---------- Formato ----------
+const nf=(v,d=2)=>isFinite(v)?v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const usd=v=>(v<0?'−':'')+'$'+nf(Math.abs(v));
+const pct=v=>isFinite(v)?nf(v*100,1)+'%':'—';
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const marginLevel=m=>m>=.25?'good':m>=.10?'warn':'bad';
+const MODES={sea:'Marítimo por CBM',air:'Aéreo por kg',courier:'Courier exprés',fcl:'Contenedor completo',manual:'Flete fijo'};
+
+// ---------- Estado ----------
+const LS='cargaclara.v1';
+let state={cfg:{cny:'7.10',localCode:'',localRate:'',minRent:'40'},studies:[],activeId:null,imports:[],activeImp:null};
+const touched=new Set();
+function newStudy(name){
+  return {id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name||'Producto nuevo',created:Date.now(),updated:Date.now(),
+    cur:'USD',mode:'sea',upc:'1',airDiv:'6000',courDiv:'5000',taxOn:true,d2d:true,cands:[]};
+}
+function exampleStudy(){
+  return Object.assign(newStudy('Ejemplo: audífonos inalámbricos'),{example:true,cur:'USD',price:'3.50',qty:'500',inland:'40',agentPct:'5',payPct:'1',payFix:'25',
+    upc:'50',bl:'60',bw:'40',bh:'40',bkg:'18',mode:'sea',seaRate:'650',seaMin:'1',destFix:'60',
+    salePrice:'12',feePct:'5',adUnit:'0.80',shipUnit:'0.50',lossPct:'3',fixed:'150',months:'3',
+    notes:'Datos inventados para que veas cómo funciona. Duplícalo o bórralo.'});
+}
+function loadLocal(){try{const r=JSON.parse(localStorage.getItem(LS)||'null');if(r&&Array.isArray(r.studies)){state=Object.assign(state,r)}}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}}
+const active=()=>state.studies.find(s=>s.id===state.activeId)||null;
+
+// ---------- Nube (por persona) ----------
+let col=null;const chains={},timers={};
+async function cap(name){try{return window.claude&&window.claude.use?await window.claude.use(name):null}catch(e){return null}}
+function setSync(k){const el=$('sync');el.className=k;$('syncTxt').textContent={cloud:'Guardado en tu cuenta',local:'Guardado en este dispositivo',error:'No se pudo guardar en tu cuenta',slow:'Conectando con tu cuenta…'}[k]}
+function queueWrite(id,del){
+  if(!col)return;
+  clearTimeout(timers[id]);
+  timers[id]=setTimeout(()=>{
+    let job;
+    if(del)job=()=>col.doc(id).delete();
+    else{const src=id==='_settings'?state.cfg:state.studies.find(s=>s.id===id);if(!src)return;const body=clone(src);job=()=>col.doc(id).set(body)}
+    chains[id]=(chains[id]||Promise.resolve()).then(job).then(()=>setSync('cloud'),()=>setSync('error'));
+  },del?0:1200);
+}
+async function initCloud(){
+  try{
+    const [db,user]=await Promise.all([cap('db'),cap('user')]);
+    if(!db||!user)return setSync('local');
+    const uid=await user.id();
+    if(!uid)return setSync('local');
+    const c=db.collection('data/users/'+uid);
+    const t=setTimeout(()=>setSync('slow'),10000);
+    const snap=await c.get();clearTimeout(t);
+    const remote=[];let rs=null;
+    snap.docs.forEach(d=>{const v=d.data();if(!v)return;if(d.id==='_settings')rs=clone(v);else remote.push(clone(v))});
+    col=c;
+    if(remote.length){
+      const keep=state.studies.filter(s=>touched.has(s.id));
+      const ids=new Set(keep.map(s=>s.id));
+      state.studies=remote.filter(s=>!ids.has(s.id)).concat(keep).sort((a,b)=>(a.created||0)-(b.created||0));
+      if(rs&&!touched.has('_settings'))state.cfg=Object.assign(state.cfg,rs);
+      keep.forEach(s=>queueWrite(s.id));
+      if(!active())state.activeId=null;
+      saveLocal();fillCfg();
+      if(cur!=='estudio'||!active())paint();
+    }else{
+      state.studies.forEach(s=>queueWrite(s.id));queueWrite('_settings');
+    }
+    setSync('cloud');
+  }catch(e){setSync('local')}
+}
+function commit(id){touched.add(id);saveLocal();queueWrite(id)}
+
+// ---------- Navegación ----------
+const VIEWS=['estudios','estudio','importaciones','importacion','herramientas','china'];let cur='estudios';
+function go(h){cur=h;try{if(location.hash!=='#'+h)location.hash=h}catch(e){}paint()}
+function paint(){
+  if(!VIEWS.includes(cur))cur='estudios';
+  if(cur==='estudio'&&!active())cur='estudios';
+  if(cur==='importacion'&&!activeImp())cur='importaciones';
+  VIEWS.forEach(v=>{$('view-'+v).hidden=v!==cur});
+  document.querySelectorAll('nav button').forEach(b=>{const on=b.dataset.go===cur||(cur==='estudio'&&b.dataset.go==='estudios')||(cur==='importacion'&&b.dataset.go==='importaciones');on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
+  $('dock').hidden=cur!=='estudio'||studyTab!=='calc';
+  if(cur==='estudios')renderHome();
+  if(cur==='estudio')renderStudy();
+  if(cur==='importaciones')renderImports();
+  if(cur==='importacion')renderImport();
+}
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(VIEWS.includes(h)&&h!==cur){cur=h;paint()}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go)});
+
+// ---------- Inicio ----------
+function renderHome(){
+  const list=$('studyList'),min=minRent(state.cfg);
+  if(!state.studies.length){list.innerHTML='<div class="card"><p>No tienes estudios todavía. Crea el primero con <b>Nuevo estudio</b>.</p></div>';return}
+  list.innerHTML=state.studies.map(s=>{
+    ensureStudy(s);
+    const r=calc(s,state.cfg),has=r.revenue>0,lv=has?ruleLevel(r.rent*100,min):'';
+    const sup=bestCand(s);
+    return `<article class="card study ${lv}">
+      <div class="study-top"><h3>${esc(s.name)}</h3>
+        <div class="study-meta">${s.example?'<span class="pill neutral">ejemplo</span>':''}<span class="pill neutral">${s.d2d?'puerta a puerta · ':''}${MODES[s.mode]||''}</span>
+        ${has?`<span class="pill ${lv}">${r.ruleOk?'✔ cumple la regla':'✖ no cumple la regla'} · ${pct(r.rent)}</span>`:'<span class="pill neutral">sin precio de venta</span>'}
+        ${sup?`<span class="pill ${sup.level}">mejor proveedor ${sup.score}/100</span>`:''}</div></div>
+      <dl class="metrics">
+        <div><dt>Costo puesto/u</dt><dd>${usd(r.landedUnit)}</dd></div>
+        <div><dt>Precio venta</dt><dd>${usd(n(s.salePrice))}</dd></div>
+        <div><dt>Ganancia neta</dt><dd>${usd(r.net)}</dd></div>
+        <div><dt>Rentabilidad</dt><dd>${has?pct(r.rent):'—'}</dd></div>
+        <div><dt>Volumen</dt><dd>${nf(r.cbm,3)} CBM</dd></div>
+        <div><dt>Capital necesario</dt><dd>${usd(r.invest)}</dd></div>
+      </dl>
+      <div class="actions"><button type="button" class="btn primary sm" data-open="${s.id}">Abrir estudio</button>
+        <button type="button" class="btn sm" data-dup="${s.id}">Duplicar</button>
+        <button type="button" class="btn sm danger" data-del="${s.id}">Eliminar</button></div>
+    </article>`}).join('');
+}
+function openStudy(id){studyTab='calc';state.activeId=id;saveLocal();go('estudio');window.scrollTo(0,0)}
+function dupStudy(id){const s=state.studies.find(x=>x.id===id);if(!s)return;const c=Object.assign(clone(s),{id:newStudy().id,name:s.name.replace(/^Ejemplo: /,'')+' (copia)',created:Date.now(),updated:Date.now()});delete c.example;state.studies.push(c);commit(c.id);openStudy(c.id)}
+$('newStudy').addEventListener('click',()=>{const s=newStudy();state.studies.push(s);commit(s.id);openStudy(s.id);const el=$('f_name');if(el){el.focus();el.select()}});
+$('studyList').addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]');if(o)return openStudy(o.dataset.open);
+  const d=e.target.closest('[data-dup]');if(d)return dupStudy(d.dataset.dup);
+  const x=e.target.closest('[data-del]');
+  if(x){
+    if(x.dataset.sure){const id=x.dataset.del;state.studies=state.studies.filter(s=>s.id!==id);if(state.activeId===id)state.activeId=null;saveLocal();queueWrite(id,true);renderHome()}
+    else{x.dataset.sure='1';x.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{if(x.isConnected){delete x.dataset.sure;x.textContent='Eliminar'}},4000)}
+  }
+});
+$('dupStudy').addEventListener('click',()=>{if(active())dupStudy(active().id)});
+
+// ---------- Formulario del estudio ----------
+function F(k,label,o={}){
+  return `<label class="fld"><span>${label}</span><div class="inp">${o.pre?`<i>${o.pre}</i>`:''}<input id="f_${k}" data-k="${k}" ${o.text?'type="text"':'type="number" inputmode="decimal" step="any" min="0"'} placeholder="${o.ph||(o.text?'':'0')}">${o.unit?`<i>${o.unit}</i>`:''}</div>${o.hint?`<small>${o.hint}</small>`:''}</label>`;
+}
+const O=(k,label)=>`<div><span>${label}</span><b data-o="${k}">—</b></div>`;
+const SEC=(num,title,sub,body)=>`<section class="card"><div class="sec-h"><b>${num}</b><h3>${title}</h3>${sub?`<p class="muted small">${sub}</p>`:''}</div>${body}</section>`;
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let studyTab='calc',openCand=-1;
+function safeUrl(u){u=String(u||'').trim();if(!u)return'';if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return''}}
+function ensureStudy(s){
+  if(Array.isArray(s.cands))return;
+  s.cands=[];
+  const old=s.chk||{};
+  if(s.supName||s.supLink||Object.values(old).some(Boolean)){
+    s.cands.push({id:uid('c'),name:s.supName||'',url:s.supLink||'',type:s.supType==='Fábrica'?'fab':s.supType==='Comercializadora'?'trade':'',
+      years:old.years?'3':'',chk:Object.assign({},old,{verified:!!old.ver})});
+  }
+}
+function bestCand(s){
+  if(!Array.isArray(s.cands)||!s.cands.length)return null;
+  return s.cands.map(c=>candScore(c,s)).sort((a,b)=>b.score-a.score)[0];
+}
+function studyHTML(s){
+  return `<input class="name-input" id="f_name" data-k="name" type="text" aria-label="Nombre del producto" placeholder="Nombre del producto">
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="calc">Viabilidad y rentabilidad</button>
+    <button type="button" role="tab" data-tab="prov">Proveedores <span data-o="candCount"></span></button>
+  </div>
+  <div id="tabCalc"><div class="study-grid"><div class="sections">
+  ${SEC('01','Compra','Lo que negociaste con el proveedor',`
+    <div class="fields">
+      <label class="fld"><span>Moneda del precio</span><div class="inp"><select id="f_cur" data-k="cur"><option value="USD">USD (Alibaba)</option><option value="CNY">CNY yuan (1688)</option></select></div></label>
+      ${F('price','Precio por unidad negociado',{hint:'En la moneda elegida'})}
+      ${F('qty','Cantidad (MOQ)',{unit:'u'})}
+      ${F('link','Enlace del producto',{text:true,ph:'https://…'})}
+      ${F('inland','Envío interno en China',{pre:'$',hint:'De la fábrica al almacén de la agencia'})}
+      ${F('payPct','Comisión de la pasarela de pago',{unit:'%',hint:'Binance, tarjeta, transferencia'})}
+      ${F('payFix','Cargo fijo del pago',{pre:'$'})}
+      ${F('agentPct','Comisión del agente de compras',{unit:'%'})}
+      ${F('samples','Muestras',{pre:'$'})}
+      ${F('inspection','Inspección de calidad',{pre:'$'})}
+      ${F('originOther','Otros gastos en origen',{pre:'$'})}
+    </div>
+    <div class="outs">${O('unitUSD','Precio unitario en USD')}${O('goods','Valor de la mercancía')}${O('origin','Gastos en origen')}</div>`)}
+  ${SEC('02','Empaque y carga','CBM y peso volumétrico',`
+    <div class="fields">
+      ${F('upc','Unidades por caja',{unit:'u'})}
+      ${F('bl','Largo de la caja',{unit:'cm'})}${F('bw','Ancho de la caja',{unit:'cm'})}${F('bh','Alto de la caja',{unit:'cm'})}
+      ${F('bkg','Peso bruto por caja',{unit:'kg'})}
+    </div>
+    <div class="outs">${O('boxes','Cajas')}${O('cbm','Volumen total')}${O('gross','Peso bruto total')}${O('volAir','Peso volumétrico aéreo')}${O('chargAir','Peso cobrable aéreo')}${O('chargCour','Peso cobrable courier')}${O('density','Densidad')}</div>
+    <div class="note" data-o="densityNote"></div>`)}
+  ${SEC('03','Flete','Cómo llega a tus manos',`
+    <label class="check"><input type="checkbox" id="f_d2d" data-k="d2d"><span><b>Servicio puerta a puerta.</b> La agencia cobra una tarifa todo incluido y se encarga de aduana, aranceles y nacionalización.</span></label>
+    <div class="seg" role="radiogroup" aria-label="Cómo cobra la agencia" style="margin-top:12px">${Object.entries(MODES).map(([k,v])=>`<label><input type="radio" name="mode" id="f_mode_${k}" data-k="mode" value="${k}"><span>${v}</span></label>`).join('')}</div>
+    <div class="fields" data-mode="sea">${F('seaRate','Tarifa por CBM',{pre:'$',unit:'/CBM'})}${F('seaMin','Mínimo cobrable',{unit:'CBM',hint:'Muchas agencias cobran mínimo 1 CBM'})}
+      <label class="check"><input type="checkbox" id="f_seaWM" data-k="seaWM"><span>Cobrar por peso si es mayor (1 tonelada = 1 CBM)</span></label></div>
+    <div class="fields" data-mode="air">${F('airRate','Tarifa por kg',{pre:'$',unit:'/kg'})}${F('airMin','Mínimo cobrable',{unit:'kg'})}${F('airDiv','Divisor volumétrico',{hint:'6000 es el estándar aéreo'})}</div>
+    <div class="fields" data-mode="courier">${F('courRate','Tarifa por kg',{pre:'$',unit:'/kg'})}${F('courMin','Mínimo cobrable',{unit:'kg'})}${F('courDiv','Divisor volumétrico',{hint:'5000 usan DHL, FedEx y UPS'})}</div>
+    <div class="fields" data-mode="fcl">${F('fclCost','Costo total del contenedor',{pre:'$'})}</div>
+    <div class="fields" data-mode="manual">${F('manualFreight','Flete total cotizado',{pre:'$'})}</div>
+    <div class="fields" style="margin-top:12px">${F('destFix','Entrega local final',{pre:'$',hint:'Del centro de acopio de la agencia a tu puerta, si aplica'})}${F('insPct','Seguro de carga',{unit:'%',hint:'Sobre mercancía más flete'})}${F('transit','Días de tránsito',{unit:'días'})}</div>
+    <div class="outs">${O('billable','Cantidad cobrable')}${O('freight','Flete')}${O('insurance','Seguro')}${O('freightUnit','Flete por unidad')}</div>
+    <div class="note" id="d2dNote">Con puerta a puerta no se calculan impuestos aparte: van dentro de la tarifa de la agencia. Confirma por escrito que la tarifa incluye aranceles y nacionalización.</div>`)}
+  <div id="secTax">${SEC('04','Aduana e impuestos','Sobre el valor CIF',`
+    <label class="check"><input type="checkbox" id="f_taxOn" data-k="taxOn"><span>Calcular impuestos de importación</span></label>
+    <div class="fields" style="margin-top:10px">
+      ${F('dutyPct','Arancel',{unit:'%',hint:'Depende del código arancelario del producto'})}
+      ${F('cfeePct','Tasa aduanera',{unit:'%'})}
+      ${F('otherPct','Otros impuestos',{unit:'%'})}
+      ${F('vatPct','IVA de importación',{unit:'%'})}
+      ${F('broker','Agente aduanal y trámites',{pre:'$'})}
+    </div>
+    <label class="check" style="margin-top:8px"><input type="checkbox" id="f_vatCredit" data-k="vatCredit"><span>El IVA es crédito fiscal para mi empresa (no lo cuentes como costo)</span></label>
+    <div class="outs">${O('cif','Valor CIF')}${O('duty','Arancel')}${O('vat','IVA')}${O('taxes','Total aduana')}</div>
+    <div class="note">Los porcentajes cambian según el país y el producto. Confírmalos con tu agente aduanal antes de comprar.</div>`)}</div>
+  ${SEC('05','Venta','Cómo lo vas a vender',`
+    <div class="fields">
+      ${F('salePrice','Precio de venta por unidad',{pre:'$'})}
+      ${F('feePct','Comisión de plataforma o pasarela',{unit:'%'})}
+      ${F('adUnit','Publicidad por unidad',{pre:'$'})}
+      ${F('shipUnit','Empaque y envío al cliente por unidad',{pre:'$'})}
+      ${F('lossPct','Merma y devoluciones',{unit:'%',hint:'Unidades que no vas a poder vender'})}
+      ${F('fixed','Gastos fijos del lote',{pre:'$',hint:'Fotos, almacén, sueldos'})}
+      ${F('incTaxPct','Impuesto sobre la ganancia',{unit:'%'})}
+      ${F('months','Meses para vender el lote',{unit:'meses'})}
+    </div>`)}
+  ${SEC('06','Notas','',`<textarea id="f_notes" data-k="notes" placeholder="Variantes, tiempos de producción, acuerdos con el proveedor…"></textarea>`)}
+  </div>
+  <aside class="results" id="resultados">
+    <div class="card">
+      <div class="kpis">
+        <div class="kpi"><span>Costo real puesto / unidad</span><b data-o="landedUnit">—</b><small data-o="landedUnitL"></small></div>
+        <div class="kpi" id="kNet"><span>Ganancia neta</span><b data-o="net">—</b><small data-o="netL"></small></div>
+        <div class="kpi" id="kRent"><span>Rentabilidad</span><b data-o="rent">—</b><small data-o="rentMonth"></small></div>
+        <div class="kpi"><span>Margen neto</span><b data-o="netMargin">—</b><small data-o="netUnit"></small></div>
+      </div>
+      <div class="rule" id="ruleBox" role="status"></div>
+    </div>
+    <div class="card">
+      <h3>A dónde va el dinero</h3>
+      <div class="bar" id="costBar" role="img" aria-label="Composición del costo puesto"></div>
+      <dl class="rows" id="costRows"></dl>
+      <p class="small muted" style="margin-top:8px" data-o="factor"></p>
+    </div>
+    <div class="card">
+      <h3>Rentabilidad</h3>
+      <dl class="rows" id="profitRows" style="margin-top:8px"></dl>
+    </div>
+    <div class="card">
+      <h3>Precios clave</h3>
+      <dl class="rows" id="priceRows" style="margin-top:8px"></dl>
+    </div>
+    <div class="card">
+      <h3>¿Y si algo cambia?</h3>
+      <div class="scroll"><table><thead><tr><th>Escenario</th><th class="r">Ganancia neta</th><th class="r">Rentab.</th></tr></thead><tbody id="scen"></tbody></table></div>
+    </div>
+  </aside></div></div>
+  <div id="tabProv">
+    <div class="stack">
+      <section class="card"><div class="sec-h"><b>A</b><h3>Qué estás buscando</h3><p class="muted small">Filtros de intención</p></div>
+        <div class="fields">
+          ${F('kw','Palabra clave principal',{text:true,ph:'Ej.: UPS 1000VA'})}
+          ${F('attrs','Atributos técnicos',{text:true,ph:'Ej.: onda pura, 12V, litio'})}
+          ${F('excl','Palabras a excluir',{text:true,ph:'Ej.: juguete, repuesto, funda',hint:'Separadas por coma'})}
+          ${F('anchor','Enlace de referencia',{text:true,ph:'https://…',hint:'La publicación que usas como punto de partida'})}
+        </div>
+        <div class="row" style="margin-top:12px">
+          <a class="btn primary sm" id="goAli" target="_blank" rel="noopener" href="https://www.alibaba.com/">Buscar en Alibaba</a>
+          <a class="btn sm" id="goAe" target="_blank" rel="noopener" href="https://www.aliexpress.com/">Buscar en AliExpress</a>
+          <a class="btn sm" id="goAnchor" target="_blank" rel="noopener" href="#" hidden>Abrir enlace de referencia</a>
+        </div>
+        <p class="small muted" style="margin-top:8px">Para buscar por imagen usa el ícono de cámara del buscador de Alibaba. Las palabras a excluir se usan abajo para filtrar el catálogo de cada proveedor.</p>
+      </section>
+      <section class="card"><div class="sec-h"><b>B</b><h3>Los 3 mejores candidatos</h3><p class="muted small">Sin los que están en rojo</p></div><div id="podium"></div></section>
+      <div class="head" style="margin:0"><h3>Candidatos</h3><button type="button" class="btn primary sm" id="addCand">+ Añadir proveedor</button></div>
+      <div id="candList" class="stack"></div>
+      <div class="note"><b>Cómo comprobar la licencia:</b> pide la foto de la 营业执照, copia el código de crédito social unificado (18 caracteres) y búscalo en gsxt.gov.cn, el registro público de empresas de China. Debe coincidir el nombre, estar activa y tener en su objeto social lo que te vende. El semáforo reduce el riesgo, no lo elimina.</div>
+    </div>
+  </div>`;
+}
+function candHTML(c,i){
+  const chk=c.chk||{};
+  const CF=(k,label,o={})=>`<label class="fld"><span>${label}</span><div class="inp"><input id="c${i}_${k}" data-ci="${i}" data-ck="${k}" ${o.text?'type="text"':'type="number" inputmode="decimal" step="any" min="0"'} value="${esc(c[k]??'')}" placeholder="${o.ph||(o.text?'':'0')}">${o.unit?`<i>${o.unit}</i>`:''}</div>${o.hint?`<small>${o.hint}</small>`:''}</label>`;
+  const CK=arr=>arr.map(p=>`<label class="check"><input type="checkbox" id="c${i}_k_${p[0]}" data-ci="${i}" data-cc="${p[0]}" ${chk[p[0]]?'checked':''}><span>${p[1]}</span></label>`).join('');
+  const TA=(k,label,ph,hint)=>`<label class="fld"><span>${label}</span><textarea id="c${i}_${k}" data-ci="${i}" data-ck="${k}" placeholder="${ph}">${esc(c[k]??'')}</textarea>${hint?`<small>${hint}</small>`:''}</label>`;
+  const types=[['','No lo sé todavía'],['fab','Fabricante (Manufacturer)'],['trade','Comercializadora (Trading Company)'],['both','Fabricante y comercializadora']];
+  return `<details class="card cand" ${i===openCand?'open':''}>
+    <summary><i class="light" id="c${i}_light"></i><b id="c${i}_title"></b><span class="num" id="c${i}_score"></span></summary>
+    <p class="verdict" id="c${i}_verdict"></p>
+    <div class="fields">
+      ${CF('name','Nombre del proveedor',{text:true})}${CF('url','Enlace de su tienda',{text:true,ph:'https://…'})}
+      <label class="fld"><span>Tipo de empresa</span><div class="inp"><select id="c${i}_type" data-ci="${i}" data-ck="type">${types.map(o=>`<option value="${o[0]}" ${c.type===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></label>
+      ${CF('years','Años en la plataforma',{unit:'años',hint:'El número junto a Gold Supplier'})}
+      ${CF('ontime','Entregas a tiempo',{unit:'%',hint:'On-time delivery rate'})}
+    </div>
+    <h4>Lo que muestra la plataforma</h4><div>${CK(PLAT)}</div>
+    <h4>Publicaciones hermanas</h4>
+    ${TA('sib','Mismo producto con distinto MOQ','4.8 120 50\n4.5 35 500','Una línea por publicación: calificación, número de reseñas y MOQ, separados por espacio.')}
+    <div class="outs"><div><span>Calificación unificada</span><b id="c${i}_sibR">—</b></div><div><span>Reseñas sumadas</span><b id="c${i}_sibN">—</b></div></div>
+    <h4>Reseñas</h4>
+    ${TA('reviews','Pega las reseñas, una por línea','Funciona en español, inglés y chino','')}
+    <div id="c${i}_rev" class="small"></div>
+    <h4>Catálogo</h4>
+    ${TA('catalog','Pega los títulos de los productos de su tienda, uno por línea','','Sirve para saber si se especializa en tu nicho o vende de todo.')}
+    <div id="c${i}_cat" class="small"></div>
+    <h4>Comprobaciones que hiciste tú</h4><div>${CK(CHECKS)}</div>
+    <h4 class="bad">Señales de alerta</h4><div>${CK(FLAGS)}</div>
+    <div class="row" style="margin-top:14px"><a class="btn sm" id="c${i}_open" target="_blank" rel="noopener" href="#" hidden>Abrir su tienda</a><button type="button" class="btn sm danger" data-delcand="${i}">Quitar candidato</button></div>
+  </details>`;
+}
+function renderCands(){
+  const s=active();if(!s)return;
+  $('candList').innerHTML=s.cands.length?s.cands.map(candHTML).join(''):'<div class="card"><p class="muted">Añade los proveedores que estás comparando. Copia sus datos desde su perfil y la app calcula el semáforo y el podio.</p></div>';
+  updateProv();
+}
+function updateProv(){
+  const s=active();if(!s||!$('podium'))return;
+  const q=[s.kw,s.attrs].filter(Boolean).join(' ').trim();
+  $('goAli').href=q?'https://www.alibaba.com/trade/search?SearchText='+encodeURIComponent(q):'https://www.alibaba.com/';
+  $('goAe').href=q?'https://www.aliexpress.com/wholesale?SearchText='+encodeURIComponent(q):'https://www.aliexpress.com/';
+  const au=safeUrl(s.anchor),a=$('goAnchor');a.hidden=!au;if(au)a.href=au;
+  const res=s.cands.map(c=>candScore(c,s));
+  const LV={good:'VERDE',warn:'AMARILLO',bad:'ROJO'};
+  res.forEach((r,i)=>{
+    const c=s.cands[i],g=k=>$('c'+i+'_'+k);if(!g('light'))return;
+    g('light').className='light '+r.level;
+    g('title').textContent=c.name||'Proveedor sin nombre';
+    g('score').textContent=LV[r.level]+' · '+r.score+'/100';
+    g('verdict').textContent=r.verdict+(r.flags?' ('+r.flags+' señal'+(r.flags>1?'es':'')+' de alerta)':'');
+    g('sibR').textContent=r.sib.reviews?nf(r.sib.rating,2)+' de 5':'—';
+    g('sibN').textContent=r.sib.reviews?nf(r.sib.reviews,0)+' en '+r.sib.rows+' publicaciones':'—';
+    g('rev').innerHTML=r.rev.total?`<b>${r.rev.bad} de ${r.rev.total}</b> reseñas mencionan fallas (${pct(r.rev.rate)}).<div class="chips">${Object.entries(r.rev.cats).filter(x=>x[1]>0).map(x=>`<span class="pill ${x[1]/r.rev.total>=.15?'bad':'neutral'}">${x[0]}: ${x[1]}</span>`).join('')}</div>`:'';
+    g('cat').innerHTML=r.cat.total?(r.cat.hasKw?`<b>${r.cat.rel} de ${r.cat.total}</b> productos coinciden con tu palabra clave (${pct(r.cat.rate)})${r.cat.out?`, ${r.cat.out} descartados por tus exclusiones`:''}.${r.cat.rate<.3?' Vende de todo: es probable que sea un revendedor y no un especialista.':''}`:'Escribe la palabra clave principal arriba para filtrar este catálogo.'):'';
+    const u=safeUrl(c.url),o=g('open');o.hidden=!u;if(u)o.href=u;
+  });
+  const top=res.map((r,i)=>({r,i})).filter(x=>x.r.level!=='bad').sort((a,b)=>b.r.score-a.r.score).slice(0,3);
+  $('podium').innerHTML=top.length?`<div class="podium">${top.map((x,k)=>`<div class="${x.r.level}"><span>PUESTO ${k+1} · ${LV[x.r.level]}</span><b>${esc(s.cands[x.i].name||'Proveedor sin nombre')}</b><span class="num">${x.r.score}/100</span></div>`).join('')}</div>`
+    :`<p class="muted">${s.cands.length?'Ningún candidato pasa el filtro todavía: todos están en rojo.':'Todavía no hay candidatos.'}</p>`;
+  setO({candCount:s.cands.length?'('+s.cands.length+')':''});
+}
+function applyTab(){
+  $('tabCalc').hidden=studyTab!=='calc';$('tabProv').hidden=studyTab!=='prov';
+  document.querySelectorAll('#studyForm [data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===studyTab?'true':'false'));
+  $('dock').hidden=cur!=='estudio'||studyTab!=='calc';
+}
+function renderStudy(){
+  const s=active();if(!s)return;
+  ensureStudy(s);
+  $('studyForm').innerHTML=studyHTML(s);
+  $('studyForm').querySelectorAll('[data-k]').forEach(el=>{
+    const k=el.dataset.k;
+    if(el.type==='radio')el.checked=s[k]===el.value;
+    else if(el.type==='checkbox')el.checked=!!s[k];
+    else el.value=s[k]??'';
+  });
+  renderCands();applyTab();updateResults();
+}
+function onStudyInput(e){
+  const s=active();if(!s)return;const el=e.target;
+  if(el.dataset.ci!==undefined){
+    const c=s.cands[+el.dataset.ci];if(!c)return;
+    if(el.dataset.cc){c.chk=c.chk||{};c.chk[el.dataset.cc]=el.checked}
+    else if(el.dataset.ck)c[el.dataset.ck]=el.dataset.ck==='reviews'||el.dataset.ck==='catalog'?el.value.slice(0,30000):el.value;
+    else return;
+    delete s.example;s.updated=Date.now();commit(s.id);updateProv();return;
+  }
+  if(!el.dataset.k)return;
+  const k=el.dataset.k;
+  if(el.type==='radio'){if(!el.checked)return;s[k]=el.value}else s[k]=el.type==='checkbox'?el.checked:el.value;
+  delete s.example;s.updated=Date.now();commit(s.id);updateResults();updateProv();
+}
+$('studyForm').addEventListener('input',onStudyInput);
+$('studyForm').addEventListener('change',onStudyInput);
+$('studyForm').addEventListener('click',e=>{
+  const s=active();if(!s)return;
+  const t=e.target.closest('[data-tab]');
+  if(t){studyTab=t.dataset.tab;applyTab();return}
+  if(e.target.id==='addCand'){s.cands.push({id:uid('c'),name:'',chk:{}});openCand=s.cands.length-1;commit(s.id);renderCands();const f=$('c'+openCand+'_name');if(f)f.focus();return}
+  const d=e.target.closest('[data-delcand]');
+  if(d)twoStep(d,'¿Seguro? Toca otra vez',()=>{s.cands.splice(+d.dataset.delcand,1);openCand=-1;commit(s.id);renderCands()});
+});
+function twoStep(btn,label,fn){
+  if(btn.dataset.sure){fn();return}
+  const old=btn.textContent;btn.dataset.sure='1';btn.textContent=label;
+  setTimeout(()=>{if(btn.isConnected){delete btn.dataset.sure;btn.textContent=old}},4000);
+}
+
+function setO(map){document.querySelectorAll('[data-o]').forEach(el=>{const k=el.dataset.o;if(k in map)el.textContent=map[k]})}
+function updateResults(){
+  const s=active();if(!s||!$('ruleBox'))return;const cfg=state.cfg,r=calc(s,cfg),min=minRent(cfg);
+  document.querySelectorAll('#studyForm [data-mode]').forEach(d=>{d.hidden=d.dataset.mode!==s.mode});
+  $('secTax').hidden=!!s.d2d;$('d2dNote').hidden=!s.d2d;
+  const lr=n(cfg.localRate),lc=(cfg.localCode||'').toUpperCase()||'local';
+  const loc=v=>lr>0?'≈ '+lc+' '+nf(v*lr):'';
+  const has=r.revenue>0;
+  setO({
+    unitUSD:usd(r.unitUSD),goods:usd(r.goods),origin:usd(r.origin),
+    boxes:nf(r.boxes,0),cbm:nf(r.cbm,3)+' m³',gross:nf(r.gross,1)+' kg',volAir:nf(r.volAir,1)+' kg',chargAir:nf(r.chargAir,1)+' kg',chargCour:nf(r.chargCour,1)+' kg',
+    density:r.cbm>0?nf(r.density,0)+' kg/m³':'—',
+    densityNote:r.cbm>0?(r.density<167?'Carga voluminosa: por avión pagarás por volumen, no por peso. Suele convenir el marítimo.':'Carga densa: por avión pagarás el peso real. Si el producto vale mucho por kilo, el aéreo puede convenir.'):'Escribe las medidas de la caja para calcular CBM y peso volumétrico.',
+    billable:r.billUnit?nf(r.billable,r.billUnit==='CBM'?3:1)+' '+r.billUnit:'—',freight:usd(r.freight),insurance:usd(r.insurance),freightUnit:r.qty>0?usd(r.freight/r.qty):'—',
+    cif:usd(r.cif),duty:usd(r.duty),vat:usd(r.vat)+(s.vatCredit&&r.vat>0?' (crédito)':''),taxes:usd(r.taxes),
+    landedUnit:r.qty>0?usd(r.landedUnit):'—',landedUnitL:loc(r.landedUnit),
+    net:has?usd(r.net):'—',netL:loc(r.net),
+    netMargin:has?pct(r.netMargin):'—',netUnit:has?usd(r.netUnit)+' por unidad':'',
+    rent:has?pct(r.rent):'—',rentMonth:r.rentMonth!=null&&has?pct(r.rentMonth)+' al mes':'',
+    factor:r.goods>0?'Factor de importación: '+nf(r.factor,2)+'. Cada $1 de mercancía te cuesta $'+nf(r.factor,2)+' puesto en tu puerta.':''
+  });
+  const lv=has?ruleLevel(r.rent*100,min):'';
+  $('kNet').className='kpi '+(has&&r.net<0?'bad':'');$('kRent').className='kpi '+lv;
+  const rb=$('ruleBox');
+  if(!has){rb.className='rule';rb.innerHTML='Escribe el precio de venta para validar la regla del '+nf(min,0)+'%.'}
+  else if(r.ruleOk){rb.className='rule good';rb.innerHTML='✔ Cumple tu regla: rentabilidad de '+pct(r.rent)+' (mínimo '+nf(min,0)+'%).'}
+  else{
+    rb.className='rule bad';
+    const tips=[];if(r.rulePrice)tips.push('vende a '+usd(r.rulePrice)+' o más');if(r.maxLandedUnit>0)tips.push('baja el costo puesto a '+usd(r.maxLandedUnit)+' por unidad');
+    rb.innerHTML='✖ Alerta: rentabilidad de '+pct(r.rent)+', por debajo del mínimo de '+nf(min,0)+'%.'+(tips.length?'<span>Para cumplirla: '+tips.join(', o ')+'.</span>':'');
+  }
+  const parts=[['Mercancía',r.goods,'--c1'],['Gastos en origen',r.origin,'--c2'],[s.d2d?'Flete puerta a puerta':'Flete y seguro',r.freight+r.insurance,'--c3']];
+  if(!s.d2d||r.taxes>0)parts.push(['Aduana e impuestos',r.taxes,'--c4']);
+  parts.push(['Entrega local',r.destFix,'--c5']);
+  $('costBar').innerHTML=r.landed>0?parts.filter(p=>p[1]>0).map(p=>`<i style="width:${p[1]/r.landed*100}%;background:var(${p[2]})" title="${p[0]}: ${usd(p[1])}"></i>`).join(''):'';
+  $('costRows').innerHTML=parts.map(p=>`<div><dt><i style="background:var(${p[2]})"></i>${p[0]}</dt><dd>${usd(p[1])} <span class="muted">${r.landed>0?nf(p[1]/r.landed*100,0)+'%':''}</span></dd></div>`).join('')+`<div class="total"><dt>Costo total puesto</dt><dd>${usd(r.landed)}</dd></div>`;
+  const row=(a,b,c)=>`<div${c?' class="total"':''}><dt>${a}</dt><dd>${b}</dd></div>`;
+  $('profitRows').innerHTML=row('Unidades vendibles',nf(r.sellable,0))+row('Ingresos por ventas',usd(r.revenue))+row('Costo puesto',usd(-r.landed))+row('Ganancia bruta',usd(r.grossProfit),1)+row('Margen bruto',pct(r.grossMargin))+row('Comisiones de venta',usd(-r.fees))+row('Publicidad y envíos',usd(-r.varSell))+row('Gastos fijos',usd(-r.fixed))+(r.incomeTax>0?row('Impuesto sobre la ganancia',usd(-r.incomeTax)):'')+row('Ganancia neta',usd(r.net),1)+row('Costo total (inversión y gastos)',usd(r.totalCost))+row('Rentabilidad sobre el costo total',has?pct(r.rent):'—')+row('Capital que necesitas',usd(r.invest));
+  $('priceRows').innerHTML=row('Precio mínimo para no perder',r.bePrice>0?usd(r.bePrice):'—')+row('Precio para cumplir la regla del '+nf(min,0)+'%',r.rulePrice?usd(r.rulePrice):'—')+row('Costo puesto máximo para cumplirla',has&&r.maxLandedUnit>0?usd(r.maxLandedUnit)+' /u':'—')+row('Unidades para recuperar todo',r.beUnits!=null?nf(Math.ceil(r.beUnits),0)+(r.beUnits>r.sellable?' (más de las que tienes)':''):'—');
+  const sc=[['Como está',s],['Vendes 10% más barato',{...s,salePrice:n(s.salePrice)*.9}],['El flete sube 25%',{...s,seaRate:n(s.seaRate)*1.25,airRate:n(s.airRate)*1.25,courRate:n(s.courRate)*1.25,fclCost:n(s.fclCost)*1.25,manualFreight:n(s.manualFreight)*1.25}],['El proveedor sube 10%',{...s,price:n(s.price)*1.1}],['Solo vendes el 80%',{...s,lossPct:Math.min(100,n(s.lossPct)+20)}],['Compras el doble',{...s,qty:n(s.qty)*2}]];
+  $('scen').innerHTML=sc.map(([l,x])=>{const q=calc(x,cfg);return `<tr><td>${l}</td><td class="r${q.net<0?' bad':''}">${usd(q.net)}</td><td class="r ${q.revenue>0?ruleLevel(q.rent*100,min):''}">${q.revenue>0?pct(q.rent):'—'}</td></tr>`}).join('');
+}
+
+$('toResults').addEventListener('click',e=>{e.preventDefault();const t=$('resultados');if(t)t.scrollIntoView({behavior:'smooth'})});
+$('copySummary').addEventListener('click',async e=>{
+  const s=active();if(!s)return;const r=calc(s,state.cfg),b=e.currentTarget;
+  const t=[`DOSSIER DE VIABILIDAD: ${s.name}`,`Compra: ${nf(r.qty,0)} u a ${usd(r.unitUSD)} = ${usd(r.goods)}`,`Carga: ${nf(r.boxes,0)} cajas, ${nf(r.cbm,3)} CBM, ${nf(r.gross,1)} kg (${MODES[s.mode]})`,`${s.d2d?'Flete puerta a puerta (aduana incluida)':'Flete y seguro'}: ${usd(r.freight+r.insurance)}`,...(s.d2d?[]:[`Aduana e impuestos: ${usd(r.taxes)}`]),`Gastos en origen: ${usd(r.origin)}`,`Entrega local: ${usd(r.destFix)}`,`Costo total puesto: ${usd(r.landed)} (${usd(r.landedUnit)} por unidad)`,`Precio de venta: ${usd(n(s.salePrice))}`,`Ganancia bruta: ${usd(r.grossProfit)} (${pct(r.grossMargin)})`,`Ganancia neta: ${usd(r.net)} (${pct(r.netMargin)})`,`Rentabilidad: ${pct(r.rent)} (regla mínima ${nf(minRent(state.cfg),0)}%: ${r.ruleOk?'cumple':'NO cumple'})`,`Precio mínimo para no perder: ${usd(r.bePrice)}`].join('\n');
+  try{await navigator.clipboard.writeText(t);b.textContent='Copiado'}catch(err){b.textContent='No se pudo copiar'}
+  setTimeout(()=>{b.textContent='Copiar resumen'},1800);
+});
+
+// ---------- Herramientas ----------
+const CONT=[['20 pies estándar',589,235,239,28000],['40 pies estándar',1203,235,239,26700],['40 pies High Cube',1203,235,269,26500]];
+const TF=(id,label,unit,val)=>`<label class="fld"><span>${label}</span><div class="inp"><input id="${id}" type="number" inputmode="decimal" step="any" min="0" value="${val??''}" placeholder="0">${unit?`<i>${unit}</i>`:''}</div></label>`;
+$('tools').innerHTML=`
+<div class="card stack"><h3>CBM y peso volumétrico</h3>
+  <div class="fields">${TF('t_l','Largo','cm',60)}${TF('t_w','Ancho','cm',40)}${TF('t_h','Alto','cm',40)}${TF('t_kg','Peso por caja','kg',18)}${TF('t_n','Cajas','',10)}</div>
+  <dl class="rows" id="t_cbmOut"></dl></div>
+<div class="card stack"><h3>Cuántas cajas caben en un contenedor</h3>
+  <p class="small muted">Usa las medidas de arriba. Cuenta cajas enteras apiladas en una sola orientación y respeta el peso máximo aproximado.</p>
+  <div class="scroll"><table><thead><tr><th>Contenedor</th><th class="r">Cajas</th><th class="r">CBM usado</th><th>Límite</th></tr></thead><tbody id="t_contOut"></tbody></table></div></div>
+<div class="card stack"><h3>Conversor de moneda</h3>
+  <div class="fields">${TF('t_amt','Monto','',100)}<label class="fld"><span>Está en</span><div class="inp"><select id="t_from"><option>CNY</option><option>USD</option><option value="LOC">Moneda local</option></select></div></label></div>
+  <dl class="rows" id="t_fxOut"></dl><p class="small muted">Usa las tasas de la barra superior.</p></div>
+<div class="card stack"><h3>Conversor de medidas</h3>
+  <div class="fields">${TF('t_val','Valor','',1)}<label class="fld"><span>Convertir</span><div class="inp"><select id="t_conv">
+    <option value="2.54|cm|pulgadas a centímetros">pulgadas → cm</option><option value="0.393701|in|centímetros a pulgadas">cm → pulgadas</option>
+    <option value="0.453592|kg|libras a kilos">libras → kg</option><option value="2.20462|lb|kilos a libras">kg → libras</option>
+    <option value="35.3147|ft³|CBM a pies cúbicos">CBM → pies cúbicos</option><option value="0.0283168|CBM|pies cúbicos a CBM">pies cúbicos → CBM</option></select></div></label></div>
+  <dl class="rows" id="t_convOut"></dl></div>
+<div class="card stack" style="grid-column:1/-1"><h3>Incoterms: qué incluye el precio que te dan</h3>
+  <div class="scroll"><table><thead><tr><th>Término</th><th>El proveedor entrega</th><th>Tú pagas aparte</th></tr></thead><tbody>
+  <tr><td><b>EXW</b></td><td>En su fábrica, sin cargar</td><td>Todo: transporte en China, exportación, flete, seguro, aduana, entrega</td></tr>
+  <tr><td><b>FCA</b></td><td>Al transportista que indiques, exportación hecha</td><td>Flete, seguro, aduana, entrega</td></tr>
+  <tr><td><b>FOB</b></td><td>A bordo del barco en puerto chino</td><td>Flete marítimo, seguro, aduana, entrega</td></tr>
+  <tr><td><b>CFR</b></td><td>Flete pagado hasta tu puerto</td><td>Seguro, gastos de puerto, aduana, entrega</td></tr>
+  <tr><td><b>CIF</b></td><td>Flete y seguro hasta tu puerto</td><td>Gastos de puerto, aduana, entrega</td></tr>
+  <tr><td><b>DAP</b></td><td>En tu dirección, sin nacionalizar</td><td>Aduana e impuestos</td></tr>
+  <tr><td><b>DDP</b></td><td>En tu dirección con impuestos pagados</td><td>Nada más (confirma por escrito qué impuestos incluye)</td></tr>
+  </tbody></table></div></div>`;
+function updTools(){
+  const v=id=>n($(id).value),l=v('t_l'),w=v('t_w'),h=v('t_h'),kg=v('t_kg'),nb=v('t_n');
+  const cb=l*w*h/1e6,tot=cb*nb,g=kg*nb,va=l*w*h/6000*nb,vc=l*w*h/5000*nb;
+  const row=(a,b)=>`<div><dt>${a}</dt><dd>${b}</dd></div>`;
+  $('t_cbmOut').innerHTML=row('CBM por caja',nf(cb,4)+' m³')+row('CBM total',nf(tot,3)+' m³')+row('Pies cúbicos',nf(tot*35.3147,1)+' ft³')+row('Peso bruto',nf(g,1)+' kg')+row('Volumétrico aéreo (÷6000)',nf(va,1)+' kg')+row('Volumétrico courier (÷5000)',nf(vc,1)+' kg')+row('Cobrable aéreo',nf(Math.max(g,va),1)+' kg')+row('Cobrable marítimo',nf(Math.max(tot,g/1000),3)+' CBM');
+  $('t_contOut').innerHTML=CONT.map(c=>{const byV=fitBoxes(l,w,h,c[1],c[2],c[3]),byW=kg>0?Math.floor(c[4]/kg):Infinity,q=Math.min(byV,byW);return `<tr><td>${c[0]}</td><td class="r">${nf(q,0)}</td><td class="r">${nf(q*cb,1)}</td><td>${byV===0?'—':byW<byV?'peso':'espacio'}</td></tr>`}).join('');
+  const amt=v('t_amt'),from=$('t_from').value,cny=n(state.cfg.cny),lr=n(state.cfg.localRate),lc=(state.cfg.localCode||'').toUpperCase()||'Moneda local';
+  const u=from==='USD'?amt:from==='CNY'?(cny>0?amt/cny:0):(lr>0?amt/lr:0);
+  $('t_fxOut').innerHTML=row('USD','$'+nf(u))+row('CNY','¥'+nf(u*cny))+row(lc,lr>0?nf(u*lr):'pon la tasa arriba');
+  const [f,unit,lab]=$('t_conv').value.split('|');$('t_convOut').innerHTML=row(lab,nf(v('t_val')*parseFloat(f),3)+' '+unit);
+}
+$('tools').addEventListener('input',updTools);$('tools').addEventListener('change',updTools);
+
+// ---------- 1688 ----------
+const GLOSS=[['价格','jiàgé','precio'],['起批量','qǐ pī liàng','cantidad mínima de pedido'],['批发','pīfā','venta al mayor'],['一件代发','yī jiàn dàifā','envío por unidad (dropshipping)'],['现货','xiànhuò','en existencia'],['定制','dìngzhì','personalizado / con tu marca'],['包邮','bāoyóu','envío incluido dentro de China'],['运费','yùnfèi','costo de envío'],['发货地','fāhuò dì','lugar de despacho'],['48小时发货','','despacha en 48 horas'],['成交','chéngjiāo','ventas concretadas'],['评价','píngjià','reseñas'],['回头率','huítóu lǜ','porcentaje de clientes que recompran'],['源头工厂','yuántóu gōngchǎng','fábrica de origen'],['实力商家','shílì shāngjiā','vendedor verificado con respaldo'],['诚信通','chéngxìn tōng','membresía de pago de 1688 (indica años)'],['深度验厂','shēndù yàn chǎng','fábrica auditada en sitio'],['规格','guīgé','especificación / variante'],['颜色','yánsè','color'],['尺寸','chǐcùn','tamaño'],['重量','zhòngliàng','peso'],['材质','cáizhì','material'],['库存','kùcún','inventario'],['样品','yàngpǐn','muestra'],['包装','bāozhuāng','empaque'],['件 / 箱','jiàn / xiāng','pieza / caja'],['元','yuán','yuan (CNY)'],['加入进货单','','añadir al carrito'],['立即订购','','comprar ahora'],['客服 / 旺旺','kèfú / wàngwàng','chat con el vendedor'],['7天无理由退货','','devolución en 7 días (solo dentro de China)']];
+$('china').innerHTML=`
+<div class="card stack"><h3>Abrir una página traducida</h3>
+  <p class="small muted">Pega el enlace de 1688, Taobao o cualquier página en chino. Se abre en una pestaña nueva pasando por el traductor de Google.</p>
+  <div class="inp"><input id="c_url" type="url" placeholder="https://detail.1688.com/offer/…" aria-label="Enlace a traducir"></div>
+  <div class="row"><a class="btn primary" id="c_open" href="https://translate.google.com/?sl=zh-CN&tl=es" target="_blank" rel="noopener">Abrir en español</a></div>
+  <div class="note">Si 1688 pide iniciar sesión o muestra un captcha, la versión traducida puede fallar. En ese caso abre la página normal en Chrome y usa su menú <b>Traducir</b>, o toma una captura y usa el traductor de imágenes.</div></div>
+<div class="card stack"><h3>Traducir una captura de pantalla</h3>
+  <p class="small muted">Toma una captura de la ficha del producto o del chat y súbela al traductor de imágenes de Google. En el teléfono también sirve la cámara de la app Google Traductor o Google Lens.</p>
+  <div class="row"><a class="btn primary" href="https://translate.google.com/?sl=zh-CN&tl=es&op=images" target="_blank" rel="noopener">Abrir traductor de imágenes</a></div></div>
+<div class="card stack"><h3>Traducir texto</h3>
+  <textarea id="c_txt" placeholder="Pega el texto en chino, o escribe en español lo que quieres decirle al vendedor"></textarea>
+  <div class="row"><a class="btn primary" id="c_txtGo" href="https://translate.google.com/?sl=zh-CN&tl=es&op=translate" target="_blank" rel="noopener">Chino → español</a><a class="btn" id="c_replyGo" href="https://translate.google.com/?sl=es&tl=zh-CN&op=translate" target="_blank" rel="noopener">Mi mensaje → chino</a></div>
+  <p class="small muted">Se abre el traductor de Google con tu texto ya puesto.</p></div>
+<div class="card stack"><h3>Cómo buscar un producto en chino</h3>
+  <p class="small muted">En 1688 se encuentra mucho más buscando en chino. Escribe el producto, pásalo a chino, copia el resultado y pégalo en el buscador de 1688.</p>
+  <div class="inp"><input id="c_kw" type="text" placeholder="Ej.: termo de acero inoxidable de 1 litro" aria-label="Producto a buscar"></div>
+  <div class="row"><a class="btn primary" id="c_kwGo" href="https://translate.google.com/?sl=es&tl=zh-CN&op=translate" target="_blank" rel="noopener">Pasar a chino</a><a class="btn" href="https://www.1688.com/" target="_blank" rel="noopener">Ir a 1688</a></div></div>
+<div class="card stack" style="grid-column:1/-1"><h3>Lo que dice cada botón y etiqueta de 1688</h3>
+  <div class="scroll"><table><thead><tr><th>Chino</th><th>Pinyin</th><th>Significa</th></tr></thead><tbody>${GLOSS.map(g=>`<tr><td class="zh">${g[0]}</td><td class="muted">${g[1]}</td><td>${g[2]}</td></tr>`).join('')}</tbody></table></div></div>`;
+$('c_url').addEventListener('input',e=>{let u=e.target.value.trim();if(u&&!/^https?:\/\//i.test(u))u='https://'+u;$('c_open').href=u?'https://translate.google.com/translate?sl=zh-CN&tl=es&u='+encodeURIComponent(u):'https://translate.google.com/?sl=zh-CN&tl=es'});
+const GT=(sl,tl,t)=>'https://translate.google.com/?sl='+sl+'&tl='+tl+'&op=translate'+(t?'&text='+encodeURIComponent(t.slice(0,4500)):'');
+$('c_txt').addEventListener('input',e=>{const t=e.target.value.trim();$('c_txtGo').href=GT('zh-CN','es',t);$('c_replyGo').href=GT('es','zh-CN',t)});
+$('c_kw').addEventListener('input',e=>{$('c_kwGo').href=GT('es','zh-CN',e.target.value.trim())});
+
+// ---------- Copia de respaldo ----------
+$('expBtn').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify({app:'cargaclara',v:2,cfg:state.cfg,studies:state.studies,imports:state.imports},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cargaclara-respaldo-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+});
+$('impBtn').addEventListener('click',()=>$('impFile').click());
+$('impFile').addEventListener('change',async e=>{
+  const f=e.target.files[0],b=$('impBtn');if(!f)return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(!d||!Array.isArray(d.studies))throw 0;
+    const inc=d.studies.filter(s=>s&&typeof s.id==='string');
+    const ids=new Set(inc.map(s=>s.id));
+    state.studies=state.studies.filter(s=>!ids.has(s.id)&&!s.example).concat(inc);
+    if(Array.isArray(d.imports)){const ii=d.imports.filter(x=>x&&typeof x.id==='string'),i2=new Set(ii.map(x=>x.id));state.imports=state.imports.filter(x=>!i2.has(x.id)).concat(ii)}
+    if(d.cfg&&typeof d.cfg==='object')state.cfg=Object.assign(state.cfg,d.cfg);
+    saveLocal();fillCfg();updTools();paint();b.textContent='Copia importada';
+  }catch(err){b.textContent='Ese archivo no es una copia válida'}
+  e.target.value='';setTimeout(()=>{b.textContent='Importar copia'},2500);
+});
+
+// ---------- Importaciones ----------
+let selLine=-1,pf=null;
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fix=v=>v?String(+v.toFixed(2)):'';
+function newImport(name){return {id:uid('i'),name:name||'Importación nueva',niche:'',status:'activa',date:today(),cur:'USD',alloc:'valor',lines:[]}}
+const activeImp=()=>state.imports.find(x=>x.id===state.activeImp)||null;
+function openImport(id){state.activeImp=id;saveLocal();go('importacion');window.scrollTo(0,0)}
+const ALLOC={valor:'valor de cada producto',cantidad:'cantidad de unidades',peso:'peso'};
+
+function renderImports(){
+  const box=$('impDash'),list=$('impList');
+  const R=state.imports.map(i=>({i,r:calcImport(i,state.cfg)}));
+  if(!R.length){box.innerHTML='';list.innerHTML='<div class="card"><p>Todavía no registras importaciones. Crea una con <b>Nueva importación</b>, o abre un estudio y pulsa <b>Convertir en importación</b>.</p></div>';return}
+  const S=k=>R.reduce((a,x)=>a+x.r[k],0);
+  const inv=S('invested'),rec=S('recovered'),gross=S('gross'),profit=S('profit'),pend=S('pending'),stock=S('stockCost');
+  const byN={};R.forEach(x=>{const k=(x.i.niche||'').trim()||'Sin nicho';byN[k]=(byN[k]||0)+x.r.invested});
+  const niches=Object.entries(byN).sort((a,b)=>b[1]-a[1]);const maxN=niches.length?niches[0][1]:0;
+  const nDone=R.filter(x=>x.r.done).length,nAct=R.filter(x=>x.i.status!=='cerrada').length;
+  const K=(l,v,sm,cls)=>`<div class="kpi ${cls||''}"><span>${l}</span><b>${v}</b><small>${sm||''}</small></div>`;
+  box.innerHTML=`<div class="card"><div class="kpis k3">
+      ${K('Inversión total',usd(inv),R.length+' importaciones, '+nAct+' activas')}
+      ${K('Capital recuperado',usd(rec),inv>0?pct(rec/inv)+' de lo invertido':'',rec>=inv&&inv>0?'good':'')}
+      ${K('Ganancia neta realizada',usd(profit),'Lo que ya ganaste',profit<0?'bad':profit>0?'good':'')}
+      ${K('Ganancia bruta realizada',usd(gross),'Antes de gastos de venta')}
+      ${K('Por ganar con el stock',usd(pend),'Si vendes al precio estimado')}
+      ${K('Capital en stock',usd(stock),'Al costo real')}
+    </div>
+    <div class="meter ${rec>=inv&&inv>0?'good':''}" style="margin-top:14px" role="img" aria-label="Capital recuperado"><i style="width:${inv>0?Math.min(100,Math.max(0,rec/inv*100)):0}%"></i></div>
+    <p class="small muted">${nDone} de ${R.length} importaciones ya recuperaron su capital. Ganancia total esperada: <b>${usd(profit+pend)}</b>.</p></div>
+    <div class="card"><h3>Inversión por nicho</h3>
+      <div class="nbars">${niches.map(([k,v])=>`<div class="nbar" title="${esc(k)}: ${usd(v)}"><span>${esc(k)}</span><div class="track"><i style="width:${maxN>0?v/maxN*100:0}%"></i></div><b class="num">${usd(v)} · ${inv>0?nf(v/inv*100,0):0}%</b></div>`).join('')}</div></div>`;
+  list.innerHTML=R.map(({i,r})=>{
+    const closed=i.status==='cerrada';
+    const st=r.done?'<span class="pill good">✔ capital recuperado</span>':closed?'<span class="pill bad">cerrada sin recuperar</span>':`<span class="pill warn">recuperado ${pct(r.recPct)}</span>`;
+    return `<article class="card study ${r.done?'good':closed?'bad':''}">
+      <div class="study-top"><h3>${esc(i.name)}</h3><div class="study-meta"><span class="pill neutral">${esc((i.niche||'').trim()||'sin nicho')}</span><span class="pill neutral">${closed?'cerrada':'activa'}</span>${st}</div></div>
+      <div class="meter ${r.done?'good':''}" role="img" aria-label="Capital recuperado"><i style="width:${Math.min(100,Math.max(0,r.recPct*100))}%"></i></div>
+      <dl class="metrics">
+        <div><dt>Invertido</dt><dd>${usd(r.invested)}</dd></div>
+        <div><dt>Recuperado</dt><dd>${usd(r.recovered)}</dd></div>
+        <div><dt>Ganancia neta</dt><dd>${usd(r.profit)}</dd></div>
+        <div><dt>Por ganar</dt><dd>${usd(r.pending)}</dd></div>
+        <div><dt>Vendidas</dt><dd>${nf(r.sold,0)} / ${nf(r.units,0)}</dd></div>
+        <div><dt>Productos</dt><dd>${r.lines.length}</dd></div>
+      </dl>
+      <div class="actions"><button type="button" class="btn primary sm" data-openimp="${i.id}">Abrir y registrar ventas</button><button type="button" class="btn sm danger" data-delimp="${i.id}">Eliminar</button></div>
+    </article>`}).join('');
+}
+$('newImport').addEventListener('click',()=>{const i=newImport();state.imports.push(i);openImport(i.id);const f=$('i_name');if(f){f.focus();f.select()}});
+$('impList').addEventListener('click',e=>{
+  const o=e.target.closest('[data-openimp]');if(o)return openImport(o.dataset.openimp);
+  const d=e.target.closest('[data-delimp]');
+  if(d)twoStep(d,'¿Seguro? Toca otra vez',()=>{state.imports=state.imports.filter(x=>x.id!==d.dataset.delimp);saveLocal();renderImports()});
+});
+$('toImport').addEventListener('click',()=>{
+  const s=active();if(!s)return;const r=calc(s,state.cfg);
+  const imp=newImport(s.name.replace(/^Ejemplo: /,''));
+  imp.inland=fix(n(s.inland));imp.freight=fix(r.freight+r.insurance+r.taxes);imp.fees=fix(r.payFee+r.agent);imp.local=fix(r.destFix);imp.other=fix(n(s.samples)+n(s.inspection)+n(s.originOther));
+  imp.lines=[{id:uid('l'),name:s.name.replace(/^Ejemplo: /,''),sku:'',qty:String(r.qty||''),price:r.unitUSD?String(+r.unitUSD.toFixed(4)):'',kg:'',sale:s.salePrice||'',sales:[]}];
+  state.imports.push(imp);openImport(imp.id);
+});
+
+function renderImport(){
+  const im=activeImp();if(!im)return;selLine=-1;pf=null;
+  if(!Array.isArray(im.lines))im.lines=[];
+  const IF=(k,label,o={})=>`<label class="fld"><span>${label}</span><div class="inp">${o.pre?`<i>${o.pre}</i>`:''}<input id="i_${k}" data-ik="${k}" ${o.type?`type="${o.type}"`:o.text?'type="text"':'type="number" inputmode="decimal" step="any" min="0"'} value="${esc(im[k]??'')}" placeholder="${o.ph||(o.text||o.type?'':'0')}" ${o.list?`list="${o.list}"`:''}>${o.unit?`<i>${o.unit}</i>`:''}</div>${o.hint?`<small>${o.hint}</small>`:''}</label>`;
+  const SL=(k,label,opts,hint)=>`<label class="fld"><span>${label}</span><div class="inp"><select id="i_${k}" data-ik="${k}">${opts.map(o=>`<option value="${o[0]}" ${(im[k]||opts[0][0])===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>${hint?`<small>${hint}</small>`:''}</label>`;
+  const niches=[...new Set(state.imports.map(x=>(x.niche||'').trim()).filter(Boolean))];
+  $('impForm').innerHTML=`
+  <input class="name-input" id="i_name" data-ik="name" type="text" value="${esc(im.name)}" aria-label="Nombre de la importación" placeholder="Nombre de la importación">
+  <datalist id="nicheList">${niches.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+  <div class="stack" style="margin-top:14px">
+    <div class="card">
+      <div class="kpis k3">
+        <div class="kpi"><span>Invertido</span><b id="io_k_inv">—</b><small id="io_k_units"></small></div>
+        <div class="kpi" id="io_kRec"><span>Recuperado</span><b id="io_k_rec">—</b><small id="io_k_recp"></small></div>
+        <div class="kpi" id="io_kProfit"><span>Ganancia neta</span><b id="io_k_profit">—</b><small>Ya realizada</small></div>
+        <div class="kpi"><span>Por ganar</span><b id="io_k_pend">—</b><small>Con el stock que queda</small></div>
+      </div>
+      <div class="meter" id="io_meter" role="img" aria-label="Capital recuperado" style="margin-top:12px"><i></i></div>
+      <div class="rule" id="io_state" role="status"></div>
+    </div>
+    <div class="two">
+    ${SEC('01','Datos de la operación','',`<div class="fields">
+      ${IF('niche','Nicho o categoría',{text:true,ph:'Ej.: Electrónica, Energía',list:'nicheList'})}
+      ${SL('status','Estado',[['activa','Activa'],['cerrada','Cerrada']])}
+      ${IF('date','Fecha de compra',{type:'date'})}
+      ${SL('cur','Moneda de los precios',[['USD','USD'],['CNY','CNY yuan']],'Los costos globales van siempre en USD')}
+    </div>`)}
+    ${SEC('02','Costos globales de la caja','Se reparten entre todos los productos',`<div class="fields">
+      ${IF('inland','Envío interno en China',{pre:'$'})}
+      ${IF('freight','Flete puerta a puerta',{pre:'$',hint:'Tarifa todo incluido de la agencia'})}
+      ${IF('fees','Comisiones de pago',{pre:'$'})}
+      ${IF('local','Entrega local final',{pre:'$'})}
+      ${IF('other','Otros gastos',{pre:'$'})}
+      ${SL('alloc','Repartir según',[['valor','Valor de cada producto'],['cantidad','Cantidad de unidades'],['peso','Peso']])}
+    </div>
+    <div class="outs"><div><span>Mercancía</span><b id="io_goods">—</b></div><div><span>Costos globales</span><b id="io_global">—</b></div><div><span>Inversión total</span><b id="io_inv">—</b></div></div>
+    <div class="note" id="io_allocNote"></div>`)}
+    </div>
+    ${SEC('03','Cargar la proforma','Excel, CSV o tabla pegada',`
+      <div class="stack">
+        <label class="fld"><span>Archivo de la proforma (.xlsx, .xls o .csv)</span><input type="file" id="pfFile" accept=".xlsx,.xls,.csv,.tsv,.txt"></label>
+        <label class="fld"><span>O pega aquí la tabla copiada desde Excel o desde el PDF</span><textarea id="pfText" placeholder="Modelo&#9;Cantidad&#9;Precio unitario"></textarea></label>
+        <div class="row"><button type="button" class="btn sm" id="pfRead">Leer la tabla pegada</button></div>
+        <div id="pfMap"></div>
+      </div>`)}
+    ${SEC('04','Productos de la importación','Costo real de cada modelo',`
+      <div class="scroll"><table class="lines"><thead><tr><th>Producto</th><th>SKU</th><th>Cant.</th><th id="lh_price">Precio</th><th>Peso/u kg</th><th class="r">Costos repartidos</th><th class="r">Costo real/u</th><th>Venta est. $</th><th class="r">Rentab.</th><th class="r">Vendidas</th><th></th></tr></thead><tbody id="lineRows"></tbody></table></div>
+      <div class="row" style="margin-top:10px"><button type="button" class="btn sm" id="addLine">+ Añadir producto</button></div>`)}
+    <section class="card" id="salesPanel" hidden></section>
+    <div class="card"><h3>Resumen de la importación</h3><dl class="rows" id="io_rows" style="margin-top:8px"></dl></div>
+  </div>`;
+  renderLines();
+}
+function renderLines(){
+  const im=activeImp();if(!im)return;
+  $('lh_price').textContent='Precio '+(im.cur==='CNY'?'¥':'$');
+  const C=(i,k,v,cls,ph)=>`<input class="cell ${cls||''}" data-li="${i}" data-lk="${k}" id="l${i}_${k}" ${cls==='wide'||cls==='mid'?'type="text"':'type="number" inputmode="decimal" step="any" min="0"'} value="${esc(v??'')}" placeholder="${ph||''}" aria-label="${ph||k}">`;
+  $('lineRows').innerHTML=im.lines.length?im.lines.map((l,i)=>`<tr${i===selLine?' class="sel"':''}>
+    <td>${C(i,'name',l.name,'wide','Producto')}</td><td>${C(i,'sku',l.sku,'mid','SKU')}</td><td>${C(i,'qty',l.qty,'','Cantidad')}</td><td>${C(i,'price',l.price,'','Precio')}</td><td>${C(i,'kg',l.kg,'','Peso')}</td>
+    <td class="r" id="l${i}_alloc"></td><td class="r" id="l${i}_unit"></td><td>${C(i,'sale',l.sale,'','Venta')}</td><td class="r" id="l${i}_rent"></td><td class="r" id="l${i}_sold"></td>
+    <td><div class="row" style="flex-wrap:nowrap"><button type="button" class="btn sm primary" data-sales="${i}">Ventas</button><button type="button" class="btn sm danger" data-delline="${i}" aria-label="Quitar producto">Quitar</button></div></td></tr>`).join('')
+    :'<tr><td colspan="11" class="muted">Sin productos todavía. Carga la proforma o añade uno a mano.</td></tr>';
+  renderSales();updateImport();
+}
+function updateImport(){
+  const im=activeImp();if(!im||!$('io_rows'))return;
+  const r=calcImport(im,state.cfg),min=minRent(state.cfg);
+  r.lines.forEach((x,i)=>{
+    const g=k=>$('l'+i+'_'+k);if(!g('alloc'))return;
+    g('alloc').textContent=usd(x.alloc);g('unit').textContent=x.qty>0?usd(x.unit):'—';
+    const rc=g('rent');rc.textContent=x.rent!=null?pct(x.rent):'—';rc.className='r '+(x.rent!=null?ruleLevel(x.rent*100,min):'');
+    g('sold').textContent=nf(x.sold,0)+' / '+nf(x.qty,0);
+  });
+  const T=(id,v)=>{$(id).textContent=v};
+  T('io_goods',usd(r.goods));T('io_global',usd(r.global));T('io_inv',usd(r.invested));
+  $('io_allocNote').textContent=im.lines.length?('Los '+usd(r.global)+' de costos globales se reparten según '+ALLOC[r.usedAlloc]+'.'+(r.usedAlloc!==(im.alloc||'valor')?' Faltan datos para repartir por '+(im.alloc==='peso'?'peso':'cantidad')+', así que se usó '+ALLOC[r.usedAlloc]+'.':'')):'Añade productos para ver el reparto.';
+  T('io_k_inv',usd(r.invested));T('io_k_units',nf(r.units,0)+' unidades en '+r.lines.length+' productos');
+  T('io_k_rec',usd(r.recovered));T('io_k_recp',r.invested>0?pct(r.recPct)+' de lo invertido':'');
+  T('io_k_profit',usd(r.profit));T('io_k_pend',usd(r.pending));
+  $('io_kRec').className='kpi '+(r.done?'good':'');$('io_kProfit').className='kpi '+(r.profit<0?'bad':r.profit>0?'good':'');
+  const m=$('io_meter');m.className='meter '+(r.done?'good':'');m.firstElementChild.style.width=Math.min(100,Math.max(0,r.recPct*100))+'%';
+  const st=$('io_state');
+  if(!(r.invested>0)){st.className='rule';st.textContent='Registra los productos y sus costos para empezar.'}
+  else if(r.done){st.className='rule good';st.textContent='✔ Capital recuperado. Todo lo que entra desde ahora es ganancia.'}
+  else{st.className='rule warn';st.textContent='Faltan '+usd(r.invested-r.recovered)+' para recuperar el capital.'}
+  const row=(a,b,c)=>`<div${c?' class="total"':''}><dt>${a}</dt><dd>${b}</dd></div>`;
+  $('io_rows').innerHTML=row('Mercancía',usd(r.goods))+row('Costos globales',usd(r.global))+row('Inversión total',usd(r.invested),1)+row('Unidades vendidas',nf(r.sold,0)+' de '+nf(r.units,0))+row('Ingresos netos de gastos',usd(r.recovered))+row('Ganancia bruta realizada',usd(r.gross))+row('Ganancia neta realizada',usd(r.profit),1)+row('Stock pendiente al costo',usd(r.stockCost))+row('Por ganar con el stock',usd(r.pending))+row('Ganancia total esperada',usd(r.profit+r.pending),1);
+  renderSalesInfo(r);
+}
+function renderSales(){
+  const im=activeImp(),p=$('salesPanel');if(!im||!p)return;
+  const l=im.lines[selLine];
+  if(!l){p.hidden=true;p.innerHTML='';return}
+  p.hidden=false;
+  p.innerHTML=`<div class="sec-h"><b>05</b><h3>Ventas de ${esc(l.name||'este producto')}</h3></div>
+    <div class="fields">
+      <label class="fld"><span>Fecha</span><div class="inp"><input type="date" id="s_date" value="${today()}"></div></label>
+      <label class="fld"><span>Unidades vendidas</span><div class="inp"><input type="number" inputmode="decimal" step="any" min="0" id="s_units" placeholder="0"><i>u</i></div></label>
+      <label class="fld"><span>Precio real por unidad</span><div class="inp"><i>$</i><input type="number" inputmode="decimal" step="any" min="0" id="s_price" value="${esc(l.sale??'')}" placeholder="0"></div><small>Cámbialo si vendiste más caro o más barato</small></label>
+      <label class="fld"><span>Gastos de esta venta</span><div class="inp"><i>$</i><input type="number" inputmode="decimal" step="any" min="0" id="s_cost" placeholder="0"></div><small>Comisión, envío, publicidad</small></label>
+    </div>
+    <div class="row" style="margin-top:12px"><button type="button" class="btn primary" id="addSale">Registrar venta</button><span class="small bad" id="s_msg" role="alert"></span></div>
+    <div id="salesInfo" style="margin-top:14px"></div>`;
+}
+function renderSalesInfo(r){
+  const im=activeImp(),box=$('salesInfo');if(!im||!box)return;
+  const l=im.lines[selLine],x=r.lines[selLine];if(!l||!x)return;
+  const row=(a,b,c)=>`<div${c?' class="total"':''}><dt>${a}</dt><dd>${b}</dd></div>`;
+  const sales=l.sales||[];
+  box.innerHTML=`<dl class="rows">${row('Vendidas',nf(x.sold,0)+' de '+nf(x.qty,0)+' ('+nf(x.stock,0)+' en stock)')}${row('Ha entrado por este producto',usd(x.income))}${row('Precio promedio real',x.sold>0?usd(x.avg)+(n(l.sale)>0?' (estimado '+usd(n(l.sale))+')':''):'—')}${row('Costo real por unidad',usd(x.unit))}${row('Gastos de venta',usd(-x.saleCosts))}${row('Ganancia de este producto',usd(x.profit),1)}${row('Lo que invertiste en él',usd(x.cost))}${row('Recuperado de este producto',x.cost>0?pct(x.recovered/x.cost):'—')}</dl>
+    ${sales.length?`<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Fecha</th><th class="r">Unidades</th><th class="r">Precio</th><th class="r">Gastos</th><th class="r">Ganancia</th><th></th></tr></thead><tbody>${sales.map((v,k)=>{const g=n(v.units)*(n(v.price)-x.unit)-n(v.cost);return `<tr><td>${esc(v.date||'')}</td><td class="r">${nf(n(v.units),0)}</td><td class="r">${usd(n(v.price))}</td><td class="r">${usd(n(v.cost))}</td><td class="r${g<0?' bad':''}">${usd(g)}</td><td><button type="button" class="btn sm danger" data-delsale="${k}">Borrar</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="small muted" style="margin-top:10px">Todavía no registras ventas de este producto.</p>'}`;
+}
+// Proforma
+function loadXLSX(){return new Promise((res,rej)=>{if(window.XLSX)return res(window.XLSX);const s=document.createElement('script');s.src='lib/xlsx.full.min.js';s.onload=()=>window.XLSX?res(window.XLSX):rej(new Error('lib'));s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s)})}
+function pfMsg(t){$('pfMap').innerHTML=t?`<div class="note">${t}</div>`:''}
+function showMap(rows){
+  if(!rows||rows.length<1){pf=null;pfMsg('No encontré filas con datos en esa tabla.');return}
+  pf=Object.assign({rows},guessCols(rows));renderMap();
+}
+function renderMap(){
+  if(!pf)return;const im=activeImp();
+  const lines=tableLines(pf.rows,pf.hi,pf.map);
+  const FL=[['name','Producto o descripción'],['sku','SKU o modelo'],['qty','Cantidad'],['price','Precio unitario'],['kg','Peso por unidad (opcional)']];
+  $('pfMap').innerHTML=`<div class="note"><b>Confirma qué columna es cada dato.</b> ${pf.hi>=0?'Encontré los encabezados en la fila '+(pf.hi+1)+'.':'No encontré encabezados, así que elige las columnas a mano.'}</div>
+    <div class="fields" style="margin-top:10px">${FL.map(f=>`<label class="fld"><span>${f[1]}</span><div class="inp"><select data-pf="${f[0]}" id="pf_${f[0]}"><option value="-1">No usar</option>${pf.head.map((h,j)=>`<option value="${j}" ${pf.map[f[0]]===j?'selected':''}>${esc(h)}</option>`).join('')}</select></div></label>`).join('')}</div>
+    ${lines.length?`<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Producto</th><th>SKU</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Peso</th></tr></thead><tbody>${lines.slice(0,5).map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.sku)}</td><td class="r">${nf(l.qty,0)}</td><td class="r">${nf(l.price)}</td><td class="r">${l.kg?nf(l.kg,2):'—'}</td></tr>`).join('')}</tbody></table></div>
+    <p class="small muted">${lines.length>5?'Se muestran 5 de '+lines.length+' productos. ':''}Valor total leído: <b>${nf(lines.reduce((a,l)=>a+l.qty*l.price,0))} ${im&&im.cur==='CNY'?'CNY':'USD'}</b>. Compáralo con el total de la proforma.</p>`
+    :'<p class="small bad" style="margin-top:10px">Con estas columnas no sale ningún producto. Elige al menos la cantidad y el precio unitario.</p>'}
+    <div class="row" style="margin-top:10px"><button type="button" class="btn primary sm" id="pfAdd" ${lines.length?'':'disabled'}>Añadir ${lines.length} productos</button><button type="button" class="btn sm" id="pfCancel">Cancelar</button></div>`;
+}
+async function readFile(f){
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  try{
+    if(ext==='pdf'){pfMsg('Los PDF todavía no se leen directamente. Abre el PDF, selecciona la tabla, cópiala y pégala en el cuadro de abajo.');return}
+    if(ext==='xlsx'||ext==='xls'){
+      pfMsg('Leyendo el archivo…');
+      const X=await loadXLSX();const wb=X.read(await f.arrayBuffer(),{type:'array'});
+      let best=[];wb.SheetNames.forEach(nm=>{const rows=X.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:true,defval:''}).filter(r=>r.some(c=>String(c).trim()!==''));if(rows.length>best.length)best=rows});
+      showMap(best);return;
+    }
+    showMap(parseTable(await f.text()));
+  }catch(e){pf=null;pfMsg('No se pudo leer ese archivo. Prueba a copiar la tabla y pegarla en el cuadro de abajo.')}
+}
+function onImpInput(e){
+  const im=activeImp();if(!im)return;const el=e.target;
+  if(el.id==='pfFile'){if(e.type==='change'&&el.files[0])readFile(el.files[0]);return}
+  if(el.dataset.pf){if(pf){pf.map[el.dataset.pf]=+el.value;renderMap()}return}
+  if(el.dataset.ik){im[el.dataset.ik]=el.value;saveLocal();if(el.dataset.ik==='cur')$('lh_price').textContent='Precio '+(im.cur==='CNY'?'¥':'$');updateImport();return}
+  if(el.dataset.li!==undefined){const l=im.lines[+el.dataset.li];if(!l)return;l[el.dataset.lk]=el.value;saveLocal();updateImport()}
+}
+$('impForm').addEventListener('input',onImpInput);
+$('impForm').addEventListener('change',onImpInput);
+$('impForm').addEventListener('click',e=>{
+  const im=activeImp();if(!im)return;const t=e.target;
+  if(t.id==='addLine'){im.lines.push({id:uid('l'),name:'',sku:'',qty:'',price:'',kg:'',sale:'',sales:[]});saveLocal();renderLines();const f=$('l'+(im.lines.length-1)+'_name');if(f)f.focus();return}
+  if(t.id==='pfRead'){const tx=$('pfText').value;if(!tx.trim()){pfMsg('Pega primero la tabla.');return}showMap(parseTable(tx));return}
+  if(t.id==='pfCancel'){pf=null;pfMsg('');return}
+  if(t.id==='pfAdd'&&pf){
+    const lines=tableLines(pf.rows,pf.hi,pf.map);
+    lines.forEach(l=>im.lines.push({id:uid('l'),name:l.name,sku:l.sku,qty:String(l.qty),price:String(l.price),kg:l.kg?String(l.kg):'',sale:'',sales:[]}));
+    pf=null;saveLocal();pfMsg(lines.length+' productos añadidos. Revisa la tabla y escribe el precio de venta estimado de cada uno.');$('pfText').value='';$('pfFile').value='';renderLines();return;
+  }
+  const sv=t.closest('[data-sales]');
+  if(sv){selLine=+sv.dataset.sales;document.querySelectorAll('#lineRows tr').forEach((tr,i)=>tr.classList.toggle('sel',i===selLine));renderSales();updateImport();$('salesPanel').scrollIntoView({behavior:'smooth',block:'nearest'});return}
+  const dl=t.closest('[data-delline]');
+  if(dl){twoStep(dl,'¿Seguro?',()=>{im.lines.splice(+dl.dataset.delline,1);selLine=-1;saveLocal();renderLines()});return}
+  if(t.id==='addSale'){
+    const l=im.lines[selLine];if(!l)return;const msg=$('s_msg');
+    const units=n($('s_units').value),price=n($('s_price').value),cost=n($('s_cost').value);
+    const sold=(l.sales||[]).reduce((a,v)=>a+n(v.units),0),left=n(l.qty)-sold;
+    if(!(units>0)){msg.textContent='Escribe cuántas unidades vendiste.';return}
+    if(units>left+1e-9){msg.textContent='Solo quedan '+nf(left,0)+' unidades de este producto.';return}
+    l.sales=l.sales||[];l.sales.push({id:uid('v'),date:$('s_date').value||today(),units:String(units),price:String(price),cost:cost?String(cost):''});
+    saveLocal();msg.textContent='';$('s_units').value='';$('s_cost').value='';updateImport();return;
+  }
+  const ds=t.closest('[data-delsale]');
+  if(ds){const l=im.lines[selLine];if(!l)return;twoStep(ds,'¿Seguro?',()=>{l.sales.splice(+ds.dataset.delsale,1);saveLocal();updateImport()})}
+});
+
+// ---------- Tasas ----------
+function fillCfg(){$('cfg_minRent').value=state.cfg.minRent??'40';$('cfg_cny').value=state.cfg.cny??'';$('cfg_localCode').value=state.cfg.localCode??'';$('cfg_localRate').value=state.cfg.localRate??'';$('cfg_localLbl').textContent=(state.cfg.localCode||'').toUpperCase()||'local'}
+['cny','localCode','localRate','minRent'].forEach(k=>$('cfg_'+k).addEventListener('input',e=>{state.cfg[k]=e.target.value;$('cfg_localLbl').textContent=(state.cfg.localCode||'').toUpperCase()||'local';commit('_settings');if(cur==='estudio')updateResults();else if(cur==='importacion')updateImport();else if(cur==='estudios'||cur==='importaciones')paint();updTools()}));
+
+// ---------- Arranque ----------
+loadLocal();
+if(!Array.isArray(state.imports))state.imports=[];
+if(!state.studies.length){state.studies.push(exampleStudy())}
+fillCfg();updTools();
+{const h=location.hash.slice(1);if(VIEWS.includes(h))cur=h}
+paint();setSync('local');
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})})}
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{})}
+</script>
+</body>
+</html>

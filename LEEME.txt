@@ -1,0 +1,96 @@
+CARGACLARA IMPORTACIONES - APP WEB INSTALABLE (PWA)
+====================================================
+
+VERSIÓN 2 (noviembre 2026)
+--------------------------
+Novedades: flete puerta a puerta, regla mínima de rentabilidad con
+alerta, proveedores candidatos con semáforo y podio, importaciones con
+varios productos y prorrateo de costos, lectura de proformas en Excel o
+CSV, registro de ventas y panel global de todas las importaciones.
+
+CÓMO ACTUALIZAR SI YA LA TIENES PUBLICADA EN GITHUB
+1. Entra a tu repositorio "cargaclara" en github.com.
+2. Pulsa "Add file" > "Upload files".
+3. Arrastra desde esta carpeta: index.html, sw.js, LEEME.txt y la
+   carpeta "lib" completa (es nueva). Los íconos y el manifiesto no
+   cambiaron.
+4. Comprueba que en la lista aparezca "lib/xlsx.full.min.js" y pulsa
+   "Commit changes". Los archivos con el mismo nombre se reemplazan.
+5. Espera uno o dos minutos. En el teléfono abre la app, ciérrala del
+   todo y vuelve a abrirla: la segunda vez ya carga la versión nueva.
+Tus estudios guardados no se borran al actualizar.
+
+
+Qué hay en esta carpeta
+-----------------------
+index.html             La app completa
+manifest.webmanifest   Nombre, colores e íconos de la app
+sw.js                  Hace que funcione sin internet
+icons/                 Íconos para Android y iPhone
+lib/                   Lector de archivos Excel (SheetJS, licencia Apache 2.0)
+
+Importante: una PWA solo se puede instalar si está publicada en una
+dirección https. Abrir index.html directamente desde el teléfono no
+la instala. Publicarla es gratis y se hace una sola vez.
+
+
+PASO 1. Publicarla con GitHub Pages (gratis)
+--------------------------------------------
+1. Crea una cuenta en https://github.com (si no tienes).
+2. Crea un repositorio nuevo, público, con el nombre: cargaclara
+3. Dentro del repositorio elige "uploading an existing file" y sube
+   TODO el contenido de esta carpeta: index.html, manifest.webmanifest,
+   sw.js y las carpetas icons y lib completas. Confirma con "Commit changes".
+   (Sube lo que está DENTRO de la carpeta, no la carpeta misma.)
+4. Entra a Settings > Pages. En "Source" elige "Deploy from a branch",
+   rama "main", carpeta "/ (root)" y guarda.
+5. Espera uno o dos minutos. Tu app quedará en:
+   https://TU-USUARIO.github.io/cargaclara/
+
+Otras opciones gratuitas que funcionan igual: Netlify o Cloudflare Pages.
+Cualquier alojamiento con https sirve.
+
+
+PASO 2. Instalarla en el teléfono
+---------------------------------
+Android (Chrome):
+  Abre la dirección > menú de tres puntos > "Instalar app"
+  (o "Agregar a pantalla principal").
+
+iPhone (Safari, tiene que ser Safari):
+  Abre la dirección > botón Compartir > "Añadir a pantalla de inicio".
+
+Después de abrirla una vez con internet, funciona sin conexión.
+
+
+PASO 3 (opcional). Sacar un APK para Android
+--------------------------------------------
+Con la app ya publicada, entra a https://www.pwabuilder.com, pega tu
+dirección y genera el paquete de Android. Ese archivo .apk lo puedes
+enviar por WhatsApp. En iPhone no hace falta: se usa el Paso 2.
+
+
+Tus datos
+---------
+Los estudios se guardan en el teléfono donde los creas. No se
+sincronizan entre equipos. Para pasarlos a otro teléfono o tener
+respaldo usa "Exportar copia" y luego "Importar copia" en Mis estudios.
+Si borras los datos del navegador o desinstalas la app, se pierden:
+exporta una copia de vez en cuando.
+
+
+Actualizar la app
+-----------------
+Cuando reemplaces index.html por una versión nueva, abre sw.js y cambia
+el número de versión por el siguiente: 'cargaclara-v2' pasa a
+'cargaclara-v3' (y así cada vez). Sin ese cambio los
+teléfonos pueden seguir mostrando la versión anterior.
+
+
+Límites de esta versión
+-----------------------
+- Los datos del proveedor se copian a mano desde su perfil: la app no
+  entra sola a Alibaba. La captura automática es la fase 2.
+- Las proformas se leen en Excel (.xlsx, .xls), CSV o como tabla pegada.
+  Los PDF todavía no: abre el PDF, copia la tabla y pégala.
+- La traducción usa el traductor de Google (texto, imágenes y páginas).
